@@ -1,0 +1,157 @@
+
+
+Section \secref{Sec:SFAS} is a high-level description of the source code
+for the Zimulator. This section will be of little interest to the reader
+only wishing to make use of the simulator without modification or
+improvement.
+
+Interfacing with the code (that is, making use of the Zimulator as a
+library) is documented below in \Secref{Sec:zimzio}.
+A complete example of interfacing with the Zimulator library is given in
+\Secref{Chap:CLI} in the form of the command-line interface which
+is used to run all the provided simulation examples.
+
+\section{Source files and structure}
+\label{Sec:SFAS}
+
+Here are described in summary the Java source files which comprise the simulation core.
+The following list is intended as a very high-level tour of the various source-code files;
+of course an in-depth understanding of the source code can only be obtained by examination
+of the code and associated comments, beginning with the {\tt zio} and {\tt zim} interfaces
+and the {\tt Zimulation} class which is the public entry point.
+
+\begin{itemize}
+\item Public interfaces: (Discussed below in \Secref{Sec:zimzio})\\
+  {\tt   zim.java}  -- implemented by the Zimulator\\
+  {\tt   zio.java} -- implemented by the user (e.g.~CLI tool) to communicate with the Zimulator
+\item Object file reading and writing:\\
+  {\tt   CompiledFileIO.java} -- routines for reading and writing the system state\\
+  {\tt   CompiledFileRW.java} -- interfaces for low-level IO of objects and reference resolution\\
+  {\tt   PrimitiveDataIO.java} -- low-level routines for reading and writing basic types
+\item Communication with external servers:\\
+  {\tt   ExternalServer.java}  -- wrappers for communicating with servers\\
+  {\tt   ServerFlags.java} -- routines for manipulation of the $\xi$ server flags specified\\
+  {\tt   ServerRequest.java} -- serialization of server requests
+\item Source-file zsyntax loading:\\
+  {\tt   ZsyntaxInputParser.java} -- main parser for zsyntax input\\
+  {\tt   LabelReferencing.java}  -- resolution of labels specified in zsyntax\\
+  {\tt   LowLevelFileReading.java} -- low-level reading of zsyntax\\
+  {\tt   ZtypeReferencing.java} -- resolution of $(A,n)$ for specified \zobj{ztypes}\\
+  {\tt   ConnectivityResolution.java} -- consistency of \zobj{zlinks}, containment and \zobj{zpaths}
+  {\tt   ConstantValues.java}
+\item System and lists:\\
+  {\tt   Zimulation.java} -- main simulation class; top-level control; {\tt zim} interface implementation\\
+  {\tt   zsystem.java} -- holder for the system lists and other simulation parameters\\
+  {\tt   SystemLists.java} -- the four system lists ($[0][S][T][Z]$; documented in the code)\\
+  {\tt   Containment.java} -- management of containment of \zobj{zboxen}
+\item Verbosity and Reporting:  \\
+  {\tt Reporter.java} -- system output Reporting.
+  {\tt Verbose.java} -- verbose output
+  {\tt HTML\_output.java} -- output (debugging) of HTML-table representation of system \zobj{zbox} configuration\\
+  {\tt PS\_output.java} -- output (debugging) of Postscript representation of system \zobj{zbox} configuration\\
+  {\tt BoxCounter.java} -- counting of \zobj{zboxen} and production of live terminal output\\
+  {\tt DoReportFlags.java} -- handling of various reporting flags\\
+  {\tt ReportFlags.java} -- storage of reporting flags\\
+  {\tt TimeRoutines.java} -- time syntax (e.g.~h:m:d)\\
+  {\tt CommandLine.java} -- something to execute when Zimulator is invoked from command line
+  (This only prints a message; it is \emph{not} the CLI described in \Chapref{Chap:CLI}.)
+\item Object behaviour:\\
+  {\tt  zobject.java},
+  {\tt  zbox.java},
+  {\tt  zdemand.java},
+  {\tt  zpath.java},
+  {\tt  zschedule.java},
+  {\tt  zsource.java},
+  {\tt  zstop.java},
+  {\tt  ztype.java},
+  {\tt  zlink.java} -- behaviour of the various \zobj{zobjects} described in \Chapref{Chap:Zim}\\
+{\tt  Presence.java} -- fractional presence of \zobj{zboxen}; not utilised in metro-system simulation.\footnote{Thus, not well tested.}\\
+{\tt  Accommodation.java} -- handling questions of capacity when \zobj{zboxen} shift to new containers
+\item Paths and Links: \\
+  {\tt   Economics.java} -- keeping track of expense of various portions of a \zobj{zpath}\\
+  {\tt   ZboxNetwork.java} -- implementation of a Network interface from the auxiliary library, used to assign \zobj{zpaths}\\
+  {\tt   PathResolution.java} -- filling in missing \zobj{zboxen} along \zobj{zpaths}\\
+  {\tt   Route.java} -- keeping track of logistics of \zobj{zpaths}\\
+  {\tt   Neighbourhoods.java} -- storage of various $\Lambda$ neighbourhoods (described in \Secref{lambdaneigh})\\
+  {\tt   NeighbourhoodCalculation.java} -- calculation of the $\Lambda$ neighbourhoods 
+\end{itemize}
+
+\section{{\tt zim} and {\tt zio} interfaces}
+\label{Sec:zimzio}
+
+\emph{The Zimulator implements {\tt zim}; the user implements {\tt zio}.}
+This is explained in the present section.
+
+The {\tt zio} interface is very simple:
+\begin{lstlisting}[mathescape]
+public interface zim
+{
+    public void adjustFlags(String[] VarValPairs);   
+    public void adjustParameters(String[] VarValPairs);
+    public int run();
+}
+\end{lstlisting}
+The Zimulator is intended to be used by performing the following
+steps. A concrete example of doing so can be found in the CLI
+described in \Chapref{Chap:CLI}.
+\begin{itemize}
+\item  Instantiate a class which implements the {\tt Zimulator.zio} interface (described just below). \\
+  This class describes various input and output streams.
+\item  Instantiate a Zimulation class; {\tt MyZim = new Zimulation(zio MyZio)}. This will contain default settings.
+\item  Optionally call {\tt MyZim.adjustFlags()} and {\tt MyZim.adjustParameters()} to control the simulation.
+  Arguments to these methods contain {\tt variable=value} pairs, as used with the CLI tool, described in \Chapref{Chap:CLI}.
+\item Call {\tt MyZim.run()} to perform the simulation. \\
+  This initiates actual simulation. It does not return until the simulation has finished.
+  During the simulation, of course, servers might be consulted, depending on how the system has been prepared.
+\item The output from the simulation will be sent, \emph{as it is simulated}, in accordance with that specified in {\tt zio}.
+\end{itemize}
+
+As mentioned, all of this requires the user to implement the five functionalities (six methods) of the {\tt zio} interface:
+\begin{lstlisting}[mathescape]
+public interface zio
+{
+  // (1) Reading inputs:
+  Iterator<Iterator<String>> getZsyntaxInputs();
+  // (2) Consulting servers:
+  Iterator<String> makeZserverRequest(String ServerId, Iterator<String> Request);
+  // (3) State storage:
+  DataOutputStream saveZobjFile();
+  DataInputStream loadZobjFile();
+  // (4) Reporting:
+  void sendReportLine(int ReportChannel,String ReportLine);
+  // (5) Verbosity:
+  void sendVerboseLine(String VerboseLine);
+}
+\end{lstlisting}
+
+This interface is designed in such a way as to provide complete versatility for the user.
+For a concrete implementation of the {\tt zio} interface, the reader is referred to \Chapref{Chap:CLI}.
+
+\begin{itemize}
+\item {\tt getZsyntaxInputs()} \\
+  By means of this iterator, the Zimulator reads in initial input zsyntax.
+  The form of `iterator over iterators of strings' is meant to make it trivial to feed the Zimulator a number of source files.
+\item {\tt makeZserverRequest()} \\
+  The {\tt ServerIdentifier} is merely the identifier text string provided in the \zobj{zsystem} $\Xi$ list.
+  The reply from such a server should be zsyntax text.
+\item {\tt saveZobjFile()} and {\tt loadZobjFile()} \\
+  These methods are called to store and retrieve the system state using an internal object-file format.\\
+  Of course, the user might elect that this be done via files or in some other way.
+\item {\tt sendReportLine()} \\
+  All reporting output from the simulation is sent through this function; a line at a time is sent,
+  with a channel specified. The channel number used is that specified in the $R$ field of the object making the report.
+\item {\tt sendVerboseLine()} \\
+  All verbosity output from the simulation is sent via this function, one line at a time.
+\end{itemize}
+It is guaranteed that all provided iterators will be used immediately and completely.
+DataInputStream and DataOutputStream for object files are also accessed ``all at once''
+and subsequently closed.
+
+The difference between \emph{verbosity} and \emph{reporting} has been described in \Secref{secrep}.
+
+It is noted that a `server' is only external from the point of view of the core Zimulator.
+It may indeed be implemented as a `slow' process which replies to an http request on a distant machine,
+or it may be implemented as `fast' local code. Therefore, there is little intrinsic performance penalty
+in delegating various non-core functionality to zservers. The only requirement is that whatever
+server is implemented must emit zsyntax replies for ingestion by the Zimulator core.
+

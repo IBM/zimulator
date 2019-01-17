@@ -1,0 +1,69 @@
+
+
+\usepackage{fontspec}
+%
+% By hand:
+%
+\addtolength{\oddsidemargin}{-.875in}
+\addtolength{\evensidemargin}{-.875in}
+\addtolength{\textwidth}{1.75in}
+\addtolength{\topmargin}{-.875in}
+\addtolength{\textheight}{1.75in}
+
+\usepackage{slashed}
+\usepackage{graphicx} 
+\usepackage{hyperref}
+\usepackage{amsmath,amssymb,amsfonts}
+
+\usepackage{listings}
+\lstset{basicstyle=\fontsize{9}{9}\selectfont\ttfamily}
+
+\usepackage{authblk}
+
+\def\zobj#1{{\textsc{#1}}}
+
+\def\dotss{{$\dots$\,}\allowbreak}
+
+\def\inp#1{\texttt{\small #1}}
+
+\def\olcite#1{[\onlinecite{#1}]}
+\def\editnote#1{{\footnote{#1}}}
+
+\def\coloneqq{{:=}}
+\def\zinside{\in}
+\def\zniside{\ni}
+\def\zninside{\slashed{\in}}
+\def\znniside{\slashed{\ni}}
+
+\def\leftfootline{\leftharpoonup}
+\def\rightfootline{\rightharpoonup}
+
+%\def\lrfootline{\leftfootline\!\!\!\rightfootline}  % footlines don't work really well.
+\def\zlbarbar{\leftharpoonup \! \rightharpoonup}
+\def\zlbararr{\leftharpoonup\!\rightarrow}
+
+\def\lrline{-\!\!\!-\!\!\!-}
+\def\zlinkd#1{{\ \longrightarrow_{#1}\ }}   % Directed zlink.  ---->
+\def\zlink#1{{\ \lrline_{#1}\ }}            % Undirected.      -----
+\def\zlinks#1{{\ \zlbarbar_{#1}\ }}         %                  |---|
+\def\zlinkp#1{{\ \zlbararr_{#1}\ }}         %                  |--->
+
+\def\zbox#1{{#1}}
+
+\def\latin#1{(\emph{#1})}
+\def\nn{\nonumber}
+\def\del{\partial}
+\setlength\arraycolsep{2pt} 
+
+\def\Figref#1{Fig.~\ref{#1}}
+\def\secref#1{\ref{#1}}
+\def\Secref#1{Sec.~\ref{#1}}
+\def\chapref#1{\ref{#1}}
+\def\Chapref#1{Chapter~\ref{#1}}
+
+\def\comline#1{{\tt\$ {#1}}}
+
+\def\phref#1#2{\href{#1}{\underline{#2}}}
+
+\def\email#1{\phref{mailto:#1}{#1}}
+

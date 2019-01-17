@@ -1,0 +1,18 @@
+#!/bin/bash
+
+if [ -z "$1" ]
+then
+    echo "Usage:"
+    echo "$ ./05_FindPlatformOccupancy Label_of_Pf_zbox ReportFile.zo"
+    echo "Output CSV:"
+    echo "time[sec],time[hms],Platform,Pax"
+    echo ""
+    echo "Example:"
+    echo "$ ./05_FindPlatformOccupancy DEL_Pf_L10_1 out/madrid_08.zo"
+    exit
+fi
+
+PfLabel="$1"
+InpFile="$2"
+echo "# Reading [""$InpFile""] to see platform [""$PfLabel""] occupancy.";
+./FindOccupancyOfZbox of "$1" "$2"

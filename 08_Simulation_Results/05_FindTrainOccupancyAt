@@ -1,0 +1,23 @@
+#!/bin/bash
+
+if [ -z "$1" ]
+then
+    echo "Usage:"
+    echo "$ ./05_FindTrainOccupancyAt Label_of_Bn_zbox ReportFile.zo"
+    echo "Occupancy of the train ARRIVING at the given zbox is reported; provide a Bn or Trk zbox."
+    echo "Output CSV:"
+    echo "time[sec],time[hms],Train,Pax"
+    echo ""
+    echo "Example:"
+    echo "$ ./05_FindTrainOccupancyAt PDE_Bn_L10_1 out/madrid_08.zo"
+    exit
+fi
+
+BnTrkLabel="$1"
+InpFile="$2"
+echo "# Reading [""$InpFile""] to see occupancy of trains entering [""$BnTrkLabel""].";
+./FindOccupancyOfZbox in "$1" "$2" | grep Train
+
+#
+# grep Train is so that the Blockage is not reported.
+#

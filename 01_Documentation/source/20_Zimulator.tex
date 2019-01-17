@@ -1,0 +1,1213 @@
+
+%**************************************************************************%
+
+A completely general simulation framework, or even a definition of
+what that might mean beyond perhaps a special-purpose programming
+language, is well beyond the scope of the present work.
+In this chapter is presented an abstraction, containing objects
+sufficient for simulation of a `metro system' as described in the introduction.
+
+The following features are identified as desirable; in the present case these
+are far from independent.
+
+\emph{Simplicity} -- Events are to occur in the simulation because the
+objects within behave that way, not because particular behaviour is
+forced using specific code.  Complex behaviour results from simple
+well-defined interactions.
+
+\emph{Generality} -- System behaviour should be implemented in terms
+of high-level abstractions.  Behaviour of objects should not be
+restricted to particular real-world applications, in either name or
+function. No specific application will constrain the framework, though
+of course it shall be applicable to metro systems.
+
+\emph{Versatility} -- Metro systems, as a canonical example, come in
+many sizes and shapes.  It is desirable that the framework developed
+be capable of adapting to these discrepancies, and also to different
+levels of detail in modelling infrastructure.
+
+The scope of the system will be simulation of container agents,
+transporting things around networks, in time.
+
+It is attempted to keep specification and implementation conceptually
+separated; therefore the framework and the specific implementation are
+described in separate sections in what follows. The source code for
+the concrete implementation is the subject of \Chapref{Chap:ZimCode}.
+
+The framework will accommodate the idea of agents-for-agents; that is,
+containment of objects which themselves are capable of
+containment. However useful this idea might prove beyond one or two
+levels, it is expected to restrict the design so that the system is
+not over-specific in this regard. This implies also the accommodation
+of multiple space and time scales.
+
+\section{Zimulator}
+
+The \zobj{Zimulator} is comprised of a system of interacting objects, which
+may represent several levels of `containment' (i.e.~agents for agents).
+
+It is indeed a \zobj{zimulator}; the abbreviation `\zobj{z}' is
+chosen\footnote{The letter `z' is not intended to correspond to any
+  other use of this letter; it is merely chosen since few other words
+  begin with it.} to preface objects, so that no
+conflation can occur between casual use of a word, and a
+precisely-defined object in the system. A putative user is free to discuss
+links, routes, lines, boxes, trains, aeroplanes, containers, cars and
+anything else; the terms here are words like `\zobj{zbox}' and
+`\zobj{zlink}' which retain precise meanings, defined in the present
+chapter.
+
+\subsection{Implementation}
+Some desirable properties of the implementation are:
+\begin{itemize}
+\item Real-time capability -- It should be possible to start and stop
+  simulation, to store and retrieve system states, and to subsequently
+  evolve on various branches from a given
+  state. Optimisation\footnote{i.e.~involving a search of parameter
+    space.} or consideration of `what-if' scenarios would utilise this feature.
+\item Flexible specification -- A system is described using an input
+  language. It should balance simplicity with flexibility and extensibility.
+\item Flexible outputs -- Verbosity of various objects can be selected.
+\item Speed -- Simulation should be sufficiently fast, in terms of execution speed.
+  
+\item Modularity -- However desirable, not all system behaviour can
+  always be encoded in terms of the generic simple rules which will be
+  defined in the present chapter. A method of communication should be
+  implemented so that the core simulation can request decisions,
+  obtain system modifications, and implement other complex behaviour
+  from external \emph{servers}. This mechanism is described in detail below.
+ 
+\end{itemize}
+
+`Implementation' will thus refer to a set of several things, beyond simple instantiation of the objects described in \Secref{secobjs}:
+\begin{itemize}
+\item Situation-handling interface (\Secref{Servers})
+\item Input language (\Secref{inplang})
+\item System integration (\Secref{sysinteg})
+\item State-storage format (\Secref{ObjFileFormat})
+\item Core dynamics module (\Secref{core})
+\item Verbosity and Reporting; output formats (\Secref{secrep})
+\end{itemize}
+These are addressed in appropriate sections below.
+
+\section{Specification}
+\label{secobjs}
+
+The Zimulator amounts to defined interactions among a number of
+objects.  Some objects are static, providing information (like
+\zobj{zdemand}, or \zobj{zboxen} describing infrastructure).  Most
+time-dependence in the system is described by the evolution of
+\zobj{zboxen}, the ways in which they are \emph{contained} in each
+other and the ways they are \emph{linked} with each other.
+`Containment' always refers to direct containement $n=1$; otherwise it
+shall be referred to as `order-$n$ containment'.
+
+\emph{Containment} is effected by having a given \zobj{zbox} contain
+several others as they undergo time development.
+
+\emph{Linking} is effected by connection of \zobj{zlinks} (which are
+explicit or implicit), and they control the flow of \zobj{zboxen}.
+
+In what follows, a specification of the properties of each type of
+object are provided; after these a specification of system interaction
+rules is provided.
+
+\subsection{zsystem}
+\label{zsystemsec}
+A \zobj{zsystem} $\Psi$ references a number of objects; some are specified as inputs,
+and some are generated internally during simulation.
+This is the main object where system-wide parameters are specified.
+
+A \zobj{zsystem} definition must be given a label.  When modifying an
+extant \zobj{zsystem}, either the same label can be used, or the label
+can be omitted (which is unambiguous as there can be only one \zobj{zsystem}).
+
+Time within the \zobj{zsystem} is measured in seconds, relative to some base.
+$T_0$ specifies the origin for system
+time. The \zobj{zsystem} is ignorant of real-world dates and times;
+all times in the system are simply described with respect to this $T_0$.
+$t_0$ is the simulation starting time. The state of all objects described
+in [initial] input streams is the state of the system at this time.
+
+
+\begin{itemize}
+
+\item Properties:
+
+  $T_{0}$ -- origin for simulated time.  This is just a coordinate
+  definition; other times are measured and also reported with respect
+  to this -- that is, it is not used for any dynamics. Usually this is
+  zero.
+
+  $t_{0}$ -- start time, relative to $T_0$. %; something like 08:00 or 0.
+  
+  $t_{1}$  -- end time, relative to $T_0$. %; something like 23:00 or 86400
+  
+  $t$ -- Simulation time, relative to $T_{0}$.  The state of all objects in the system at time $t$
+  can be determined.\footnote{As simulation occurs, every object has either a discrete state which
+    remains valid at $t$, or else a temporal range which contains $t$.}
+
+  $\Xi$ -- list(1) of tuples $H$, where $H$ is the \emph{identifier} for an available \zobj{zserver}.
+  The concept of a \zobj{zserver} identifier is described in \Secref{sysinteg}.
+  These are referenced starting from $0$, which is the default server.
+  Specification of which of these to utilise is made in the $\xi$ fields of \zobj{ztype} and \zobj{zbox}
+  
+\end{itemize}
+
+\subsection{ztype}
+
+Every \zobj{zbox} in the system is of a certain type $A$ and subtype
+$n$, which refer to a \zobj{ztype}.
+
+\begin{itemize}
+  \item Properties:
+
+    $A$, $n$ -- This \zobj{ztype} defines this type name $A$ and sub-type number $n>0$. 
+    
+    ${\bf C}$ -- Containment: list(2) of tuples $A,n,\xi$ which are \zobj{zbox} Types and Numbers,
+    to be allowed containment in a \zobj{zbox} of this \zobj{ztype}.
+    If ${\bf C}$ is omitted, then nothing is allowed. $n$ absent or $0$ indicates that any sub-type may be contained.
+    $\xi$ is a server-consultation mask, absent or `$.$' if no flags are applicable.
+    
+    $q$ -- Path-resolution consideration: $0$ indicates that \zobj{zboxen} may explicitly consider
+    containment in a \zobj{zbox} of this \zobj{ztype}. $1$ indicates that \zobj{zboxen} may only
+    consider implicit containment by considering a \zobj{zpath}. $q>1$ is not [yet] supported.
+    The default value is $0$ if unspecified.
+    
+    $V$ -- Speed limit for contained \zobj{zboxen}. [ZSU/s]
+
+    $S$ -- Minimum Spacing between contained \zobj{zboxen}. [ZSU]
+    
+    $L$ -- Capacity [ZSU]; used together with $W$ to fit other \zobj{zboxen} into this
+    one; `inside size'. This can be zero so as not to restrict capacity (this is only useful in \emph{Bag} case).
+
+    $W$ -- Capacity factor ($1$ has no effect). $W\neq1$ makes sense only for \emph{Pipe} or \emph{Span} \zobj{zboxen}.
+
+    Progress and velocity within this \zobj{zbox} are scaled so that progression time is unchanged.
+    Size and spacing of those contained are not; the capacity is increased by a factor of approximately $W$.
+
+    $\rho$ -- Controls bifurcation of Presence upon entering a \zobj{zbox} of this \zobj{ztype}.
+    If this is absent, then no bifurcation occurs. If specified, this indicates a factor in the fraction
+    of the Presence of a \zobj{zbox} which will be transferred to this container. $\rho>0$.
+
+    $\rho_0$ -- Minimum presence: If bifurcation would result in less than this, then no bifurcation is performed.
+    If this is unspecified, then it will default to some small number, something like $1\times10^{-5}$, but the exact
+    value is not guaranteed.
+    
+    $x$ takes values in the range $[0,L-l]$ for the simple $W=1$ case, so that the maximum progression
+    time is $t_{\textup{prog}} = (L-l)/v$. The maximal content is $N_\textup{max} = (L+S)/(l+S)$.
+
+    Generally, with capacity $L' = WL$,
+    \[
+    N_\textup{max}:=\frac{L'+S}{l+S},\qquad
+    t_{\textup{prog}} := \frac{x_\textup{max}}{v_\textup{eff}},\qquad
+    x_\textup{max} := L' - l
+    \]
+    so that in the general $W \ge 1$ case,
+    \[x_\textup{max} = WL-l,\qquad
+    N_\textup{max} = \frac{WL+S}{l+S},
+    \]
+    \[
+    T_\textup{prog} = \frac{L-l}{v},\qquad
+    v_\textup{eff} = \frac{WL-l}{L-l}v.
+    \]
+
+    $N$ -- Numerical Capacity. If omitted, capacity is not limited by number.
+
+    $\chi$ -- a \zobj{zlink} template for an \emph{implied}
+    \zobj{zlink} between $\zbox{\varphi}$ and its container (whenever it is contained).
+    $\mu$ and $\nu$ are ignored; $\zbox{\varphi}$ and $\zbox{z}_\varphi$ are implied.
+    
+    $m$ -- Containment Mode: \emph{Static, Span, Pipe, Shelf, Fifo, Bag, Sink.}
+    
+    $v$ -- natural speed; this is the speed obtained when no collision or limit is in effect. [ZSU/s]
+
+    $\$$ -- The base cost assigned to traversal of this \zobj{zbox}. The default is $0$.
+
+    $\$f$ -- The cost factor applied when traversing another \zobj{zbox}. The default is $1$.
+    
+    $l$ --  Size; used to contain this \zobj{zbox} inside another; `outside size' [ZSU]
+
+    $R$ -- Reporting mode: Some combination of `S', `C', `P'.  The default
+    is none of these, resulting in a quiet \zobj{zbox}.  This can also
+    be specified for particular \zobj{zboxen}, which will override
+    this $R$ value.  When a \zobj{zbox} is given $R$, it
+    will report on its progress through the system; what exactly is
+    reported is implementation-dependent and described in Section
+    \ref{secrep}. $R$ also may contain a decimal integer which specifies
+    the reporting channel; if this is omitted, then the channel
+    defaults to $0$. The flag `d' can be added to increase greatly the detail level.
+    
+    $Z$ -- A list(2) of tuples $A,n$, indicating the types of
+    container in which a \zobj{zbox} should go to sleep if it cannot
+    exit immediately, awakening only when the container is subject to
+    a new implicit \zobj{zlink}, or when other \zobj{zboxen} cease
+    blocking the way.  \emph{It is important to understand that this
+    should not affect system behaviour, only simulation performance.}
+
+    $\xi$ -- Server-contact specifications for a \zobj{zbox}.
+    This can be over-ridden by the $\xi$ specification of a particular \zobj{zbox}.
+    See \Secref{servercon}.
+    
+\end{itemize}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%zbox%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{zbox}
+
+A \zobj{zbox} is the fundamental containment and transport unit in the
+system; all dynamical behaviour is modeled by the movement of
+\zobj{zboxen}. A \zobj{zbox} can contain other \zobj{zboxen}, can be
+linked to other \zobj{zboxen}, and can be contained and move within
+other \zobj{zboxen} (one at a time).
+
+Properties are generally `permissive' if omitted.
+
+\begin{itemize}
+  \item Static properties:
+
+    $i$ -- This is a string of external information which will be included in reporting.
+    This information plays no r\^ole in simulation, but is intended to be useful in
+    passing information to servers without (which might otherwise be tempting) polluting the label.
+    
+    $A$, $n$ -- Reference a \zobj{ztype} for this \zobj{zbox}.
+
+    $\pi$ -- Set to $1$ to indicate that this zbox is not to be a dynamical object itself, but instead a prototype. 
+
+    $R$ -- Reporting mode: Over-rides the \zobj{ztype} $R$ value if present.
+
+    $S,L,W,N$ -- If present, over-ride those belonging to the \zobj{ztype} $(A,n)$.
+    
+    $v$ -- If present, over-rides the velocity belonging to the \zobj{ztype} $(A,n)$.
+
+    $\rho$ -- Presence $[0,1]$; if this is specified, then the $zbox$ is cloned when certain possibilities arise.
+    If this is not specified, then Presence is not used.
+    
+  \item Dynamical variables: (All but $t$ can be given initial values where sensible)
+        
+    $\zbox{z}$ -- current \zobj{zbox} in which this one is
+    contained. A \zobj{zbox} can be contained in one \zobj{zbox}, or
+    uncontained.
+    
+    $x$ -- position of containment within $z$, trailing edge. [ZSU]
+
+    ${\bf Z}$ -- list of \zobj{zboxen} contained within this \zobj{zbox}.
+
+    $P$ -- Current \zobj{zpath} which $\varphi$ is following.
+
+    $i_P$ -- Current index along \zobj{zpath} (next desired container).
+
+    $\xi$ -- Server-contact specifications; over-rides \zobj{ztype} $\xi$.
+
+\end{itemize}
+
+Position within a \zobj{zbox} is measured using \zobj{zbox} spatial
+units [ZSU]; these are arbitrary units, the meaning of which must
+coincide between intrinsic properties of a \zobj{zbox}, and extrinsic
+properties of its contained \zobj{zboxen}. In other words, $l$ of a
+contained \zobj{zbox} is to be compared with $L$ of its container, but
+$l$ and $L$ for a given single \zobj{zbox} have no relation to each
+other; $l$ is the ``outside size'' and $L$ is the ``inside size''.
+Specification of $l$ and $L$ should be in terms of integers, though
+$v$ and $x$ need not be integer-valued.
+
+A \zobj{zbox} $\zbox{\varphi}$ will typically enter another \zobj{zbox}
+$\zbox{\lambda}$, progress through $\zbox{\lambda}$, and then exit
+$\zbox{\lambda}$, all based on rules, rates and conditions.
+
+The same symbol is used to denote a \zobj{zbox} and also the set of its contents.
+
+\begin{itemize}
+\item $\zbox{\varphi}$ contained within $\zbox{\lambda}$ is written as
+  $\zbox{\varphi} \zinside\zbox{\lambda}$ or
+  $ \zbox{\lambda} \zniside\zbox{\varphi}$ .
+\item $\zbox{\varphi}$ enters $\lambda$ is written as
+  $ \zbox{\varphi} \hookrightarrow \zbox{\lambda}$ or
+  $ \zbox{\lambda} \hookleftarrow \zbox{\varphi}$.
+\item $\zbox{\varphi}$ exits $\lambda$ is written as
+  $\zbox{\lambda} \curvearrowright \zbox{\varphi}$ or
+  $ \zbox{\varphi} \curvearrowleft \zbox{\lambda}$.
+\end{itemize}
+
+A typical sequence thus consists of the stages $\zbox{\varphi} \zninside
+\zbox{\lambda}$, $\zbox{\varphi} \hookrightarrow \zbox{\lambda}$,
+$\zbox{\varphi} \zinside\zbox{\lambda}$, $\zbox{\lambda} \curvearrowright
+\zbox{\varphi}$, and finally $\zbox{\lambda} \znniside \zbox{\varphi}$.
+
+\subsubsection{Containment modes}
+
+\emph{Span} and \emph{Pipe} are continuous. \emph{Shelf} and \emph{Fifo} are discrete.
+\emph{Sink} is special. Containment always respects types, controlled by
+$c,C,A,n$. \emph{Bag} and \emph{Static} have no notion of position.
+\emph{Span} and \emph{Pipe} can be scaled in capacity using $W$.
+
+\begin{itemize}
+
+\item \emph{Static} -- No movement occurs inside this \zobj{zbox}. It is only
+  used to specify static structure. The containment is fixed. If $m$
+  is unspecified, the containment type defaults to Static.
+
+\item \emph{Span} -- \zobj{zboxen} move with continuous position through this
+  \zobj{zbox} without interacting with each other.  They are limited
+  in number, and also by total size.\footnote{`Size' in this case might
+    be interpreted as something other than spatial extent.}  The relevant
+  variables are $\{L,W,V,N,S\}$ and $\{v,x,l\}$ for contained \zobj{zboxen}.
+  
+\item \emph{Pipe} -- \zobj{zboxen} move with continuous position through this
+  \zobj{zbox} while retaining their order.  They are limited by number
+  and by total size.  The relevant variables are $\{L,W,V,N,S\}$ and
+  $\{v,x,l\}$ for contained \zobj{zboxen}.
+
+\item \emph{Shelf} -- \zobj{zboxen} push onto the shelf on one end, and are
+  pushed off of the other end. There is no continuous position, only
+  an ordinal value, but sizes and spacing are respected. The main
+  property is that \zobj{zboxen} may only leave when the shelf is
+  full. When there are no size and spacing restrictions, `full' means
+  $N$ \zobj{zboxen} within. In the general case, `full' is defined to
+  be a state where a \zobj{zbox} identical to the \zobj{zbox} poised
+  to leave could not first be accommodated. The relevant variables are
+  $\{L,N,S\}$ and $\{l\}$ for contained \zobj{zboxen}.
+
+\item \emph{Fifo} -- This is like Shelf, but with no requirement to push
+  \zobj{zboxen} out; the cache need not be full.  Or, this is like
+  Pipe but with no continuous positions; only ordinal values.  The
+  relevant variables are $\{L,N,S\}$ and $\{l\}$ as for the Shelf
+  type.
+
+\item \emph{Bag} -- This is like Span, but with no notion of position or
+  order. Contained \zobj{zboxen} are limited in number, and also by
+  total size.  The relevant variables are $\{N,S\}$ and $\{l\}$ for
+  contained \zobj{zboxen}.
+  
+\item \emph{Sink} -- There is always room to contain a \zobj{zbox}, at which
+  time it will disappear.  None of the containment variables
+  $\{V,L,N,S\}$ is relevant.
+
+\item \emph{Filo} -- [ A pile of \zobj{zboxen} \emph{yet unimplemented} ]
+
+\end{itemize}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%% zlink %%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{zlink}
+\label{lambdaneigh}
+
+A \zobj{zlink} $\chi$ is a directed connection between two
+\zobj{zboxen} $\zbox{\varphi}$ and $\zbox{\lambda}$; when such a link
+exists with respect to a \zobj{ztype} $\tau$ it is written
+$\varphi \zlinkd{\tau} \lambda$.
+When the direction of the \zobj{zlink} is unimportant, it is written as $\varphi \zlink{\tau} \lambda$.
+
+\begin{itemize}
+\item Properties:
+  $\zbox{\mu}_\chi$, $\zbox{\nu}_\chi$ -- The \zobj{zlink} is $\mu \zlinkd{} \nu$.
+  
+  ${\bf A}_\chi$ -- Allowance list; a set of triples of the form
+  $(A,n,\Delta)$.
+\end{itemize}
+
+Here $A$ is a \zobj{zbox}
+Type, $n$ is a sub-type number, and $\Delta$ is a direction
+indicator. If $A$ is absent, there is no restriction on type or
+sub-type. If $n$ is absent (zero), the restriction is only by type
+$A$. $\Delta$ indicates forward, backward, or bidirectional flow.
+\footnote{The most usual case is expected to be a single-element
+  ${\bf A}$ for a particular desired \zobj{zlink} behaviour.}
+During simulation the configuration of \zobj{zlinks} is expected to be time-dependent.
+
+The simplest \zobj{zlink} behaviour is the case of two \zobj{zboxen} $\varphi$ and $\lambda$,
+each of which can contain \zobj{ztype} $\tau$.  When $\zbox{\varphi}
+\rightarrow_\tau \zbox{\lambda}$, \zobj{zboxen} of \zobj{ztype} $\tau$
+may pass between $\zbox{\varphi}$ and $\zbox{\lambda}$, supposing that
+entry, exit and containment are allowed, and all \zobj{zlinks} are in
+the correct orientation.
+
+A \emph{zlinked sequence} for a given \zobj{ztype} $\tau$ connects two \zobj{zboxen} $\phi$ and $\lambda$
+by means of 0 or more intermediate \zobj{zboxen} $\{\xi_j\}$.
+$\phi \zlink{\tau} \xi_1 \zlink{\tau} \dots \xi_N \zlink{\tau} \lambda$.
+Both $\phi$ and $\lambda$ must be able to contain $\tau$,
+but the intermediate \zobj{zboxen} $\xi_j$ must be unable to contain $\tau$.
+The notation $\phi \zlinks{\tau} \lambda$ will be used both as a statement and as the set of \zobj{zboxen}
+within the zlinked sequence.
+
+A \emph{zlinked path} is a zlinked sequence with the additional requirement that the \zobj{zlinks} be positively oriented.
+$\phi \zlinkd{\tau} \xi_1 \zlinkd{\tau} \dots \xi_N \zlinkd{\tau} \lambda$.
+The notation $\phi \zlinkp{\tau} \lambda$ will be used both as a statement and as the set of \zobj{zboxen}
+within the zlinked path.
+
+When $\varphi \zlinkp{\tau} \lambda$, a \zobj{zbox} $\zbox{\mu}$ of
+\zobj{ztype} $\tau$ may pass directly (instantaneously) between $\zbox{\varphi}$ and
+$\zbox{\lambda}$.
+
+\subsubsection{Neighbourhoods}
+
+This sub-section describes details pertaining to the sets of \zobj{zboxen} reachable from a given base \zobj{zbox}.
+The details here are essential only for a detailed understanding of the underlying code;
+these details are likely unimportant for a higher-level user of the Zimulator.
+
+Several sets of \zobj{zboxen} are convenient to define, based on a given \zobj{zbox}
+$\phi$ and \zobj{ztype} $\tau$:
+\begin{eqnarray}
+\Lambda_\tau(\phi) &\coloneqq& \{ \lambda \ |\ \phi \zlinks{\tau} \lambda\} \cup \{\phi\} \nn\\
+\Lambda'_\tau(\phi) &\coloneqq& \{ \lambda \ |\ \phi \zlinkp{\tau} \lambda\} \nn\\
+\tilde{\Lambda}_\tau(\phi) &\coloneqq& \bigcup_\lambda  \phi \zlinks{\tau} \lambda \nn\\
+\Lambda^{(1)}_\tau(\phi) &\coloneqq& \{ \lambda \ |\ \phi \zlink{\tau} \lambda\} \nn
+\end{eqnarray}
+Clearly, $\Lambda'_\tau(\phi) \subseteq \Lambda_\tau(\phi) \subseteq \tilde{\Lambda}_\tau(\phi)$.
+Note that generally
+%$\Lambda^{(1)} \nsubseteq \Lambda$,
+$\Lambda^{(1)} \nsubseteq \tilde{\Lambda}$
+%$\Lambda^{(1)} \nsubseteq \Lambda'$,
+since $\phi \zlink{\tau} \gamma$ does not imply
+that there exists $\lambda$ such that $\gamma \ \in \ \phi \zlinks{\tau} \lambda$.
+It might be useful to write naturally for $j>1$
+\begin{equation}
+\Lambda^{(j)}_\tau(\phi) \coloneqq \{ \lambda \ \mid \ \phi \zlink{\tau} \xi_1 \zlink{\tau} \xi_2 \cdots \xi_{j-1} \zlink{\tau} \lambda\} \nn
+\end{equation}
+and then, of course, there exists sufficiently large $j$ such that
+$ \tilde{\Lambda}_\tau(\phi) \subseteq \Lambda^{(j)}_\tau(\phi) $.
+
+These $\Lambda$ sets are used within the implementation in order to manage shifting of \zobj{zboxen}.
+They are maintained and cached for performance. In the source code they are referred to as \emph{$\Lambda$ neighbourhoods}.
+
+%  $\Lambda$_$\tau$(ϕ) := { $\lambda$ | ϕ :--:_$\tau$ $\lambda$ }    ≡   All zboxen connected by type-compatible zlinks
+%  $\Lambda$'_$\tau$(ϕ) := { $\lambda$ | ϕ :-->_$\tau$ $\lambda$ }   ≡   All zboxen connected directionally by type-compat' zlinks.
+%  $\Lambda$῀_$\tau$(ϕ) := { $\lambda$ and $\gamma$_j | ϕ :-->_$\tau$ $\lambda$ where :--> path is through $\gamma$_j }   ≡  $\Lambda$'_$\tau$(ϕ) ∪ zboxen on the actual paths.
+%  $\Lambda$1_$\tau$(ϕ) := { $\lambda$ | ϕ :-->_$\tau$ $\lambda$ where :--> is direct. }  ≡  All zboxen connected directionally by exactly one type-compatible zlink.
+
+\subsection{zpath}
+
+A \zobj{zpath} ${K}$ specifies a sequence of \zobj{zboxen} to be
+visited by a \zobj{zbox} $\zbox{\varphi}$, but they are not always
+specified directly.
+
+A \zobj{zpath} can express two different things, \emph{Plan} and \emph{Intent}.
+
+\begin{enumerate}
+  \item \emph{Plan} -- A \zobj{zpath} is used to specify a \emph{well-defined}
+    trajectory. \zobj{zstops} within the sequence describe every visit
+    to be made.  
+    %When \zobj{zboxen} are intended to do something more
+    %complex, some other structure should be used, like a
+    %\zobj{zintent}.
+
+  \item \emph{Intent} -- A \zobj{zpath} can instead be used to
+    indicate a desired list of destinations.  \zobj{zboxen} selected
+    by \zobj{zstops} within the sequence each need to be visited, but
+    some notion of route choice must typically be made between these
+    locations. In the simplest case of an Origin-Destination pair, an
+    Intent \zobj{zpath} will contain only two \zobj{zstops}, both of
+    which will be of the explicit type.
+    
+    Given the contect of the system, and a given type $(A,n)$
+    of \zobj{zbox}, an \emph{Intent} \zobj{zpath} can be resolved to
+    a \emph{Plan} \zobj{zpath}.\footnote{This can be
+    considered \emph{low-level} path resolution and always corresponds
+    to finding a shortest path. \emph{High-level} path resolution (for
+    example, consideration of other paths or paths with constraints)
+    can be implemented via the server mechanism, described below.}
+\end{enumerate}
+  
+
+
+A \zobj{zbox} can only be sent on one \zobj{zpath} at a time.
+A given \zobj{zpath} can be shared among more than one \zobj{zbox}.
+
+\begin{itemize}
+\item Properties:
+
+  $A,n$ -- \zobj{ztype} which can use this \zobj{zpath}.
+  
+  ${\Lambda}$ -- Ordered list of \zobj{zstops}.
+  
+  $m$ -- Mode: Open (default) or Closed.
+  Open indicates a single path with start and end points. Closed indicates a cyclic path, with no endpoints.
+  (If cyclic, the zpath never `completes' and would [probably] not usually be used in a \zobj{zschedule}.)
+
+  $t$ -- Type: Plan (default) or Intent.
+  
+\end{itemize}
+Each stop on the path determines a \zobj{zbox} $\zbox{\lambda}_j$.
+$\zbox{\varphi}$ is to enter, traverse, and exit $\zbox{\lambda}_j$, for $j=0\dots N_K-1$ in order.
+
+The last stop on a path could of course be a \zobj{zbox} of Containment Type \emph{Sink}.
+
+\subsection{zstop}
+
+A \zobj{zstop} is used at a stage of a \zobj{zpath} to determine a \zobj{zbox} to be visited.
+\begin{itemize}
+\item Properties:
+
+  \begin{itemize}
+  
+  \item Either:
+  
+  $\varphi$ -- An explicit \zobj{zbox}.
+
+  $\sigma_i$, $\sigma_f$ -- Fractional entry and exit
+  positions\footnote{These are not fully supported in
+  the \emph{Pipe}-containment case; this is documented in the source code. } in the referenced \zobj{zbox}
+  $\varphi$. These are optional and default to $\sigma_i=0$,
+  $\sigma_f=1$.  They are ignored if the container type has no notion
+  of position.  (\emph{Span} and \emph{Pipe} sport such a notion.)
+  
+  In the usual case, a containing \zobj{zbox} $\gamma$ is entered by a
+      moving \zobj{zbox} $\varphi$ when an appropriate \zobj{zlink}
+      exists, progression through $\gamma$ occurs, and then when
+      progression is complete, any \zobj{zlink} connected to $\gamma$
+      can be used by $\varphi$ to shift to the next desired container.
+
+  When $\sigma$ values are supplied, the behaviour is potentially
+  different:
+  \begin{itemize}
+  \item Arrival:
+    When arriving in a container \zobj{zbox} $\varphi$, via a
+    \zobj{zlink} $\chi$, the starting position within $\varphi$ is not
+    $x=0$, but instead $x = \sigma_i x_\textup{max} = \sigma_i (LW-l)$.
+\item Departure:
+  When arriving at the position $x = \sigma_f x_\textup{max}$
+  the contained \zobj{zbox} is deemed to have completed its traversal of $\varphi$,
+  and may exit according to the usual rules. It cannot travel further within $\varphi$.
+  \end{itemize}          
+  The usual \zobj{zlink} shifting rules always apply.
+  
+  \item Or:
+
+  $K$, $i$, $j$ -- if not an explicit \zobj{zbox}, then this specifies any \zobj{zbox}
+  travelling on path $K$, from container \zobj{zbox} $\mu$ to \zobj{zbox} $\nu$.
+  The \zobj{zbox} described by the \zobj{zstop} is the one which is 
+  travelling on the \zobj{zpath} and contained temporarily in $\mu$ or $\nu$.
+  $\mu$ and $\nu$ must be in order on the \zobj{zpath} but need not be subsequent.
+  (Actually, since a given \zobj{zpath} $K$ may visit $\mu$ and $\nu$ more than once,
+  indices $i$ and $j$ into the list ${\Lambda}$ of $K$ are used.)
+  
+
+  \end{itemize}
+\end{itemize}
+
+%%%%%%%%%%%%%%%%%%%%% zschedule %%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{zschedule}
+
+A \zobj{zschedule} $H$ is a way of repeating a given path a number of times.
+At each specified time, a \zobj{zbox} is chosen to be assigned to the path.
+The \zobj{zpath} is assigned if a \zobj{zbox} is available.
+The chosen \zobj{zbox} must be able to join the path with
+suitable \zobj{zlinks} extant; otherwise the \zobj{zpath}
+will still be assigned, but the \zobj{zbox} may become stuck. 
+
+\begin{itemize}
+\item Properties:
+
+  $R$ -- Reporting mode, used as in \zobj{zdemand}.
+
+  $T_{0}$ -- Base time, relative to \zobj{zsystem} $T_0$.
+
+  ${\bf T}$ -- List(1) of deployment times, relative to base time.
+
+  $P$ -- A \zobj{zpath} to assign at each of the specified times. If $P$ is an Intent path,
+  it will be resolved to a Plan path when appropriate (currently, at deployment).
+
+%  $P_r$ -- Resolution type for $P$ (if it is of Intent type) (exactly as in \zobj{zdemand}).
+%  The default is `$1$'.
+  
+%  One -- $\zbox{\varphi}$ is a \emph{particular} \zobj{zbox} to send repeatedly on the specified $\zobj{zpath}$.
+  If a \zobj{zbox} cannot be procured at deployment time, the particular deployment will be cancelled.
+  If the \zobj{zbox} selected is busy on a \zobj{zpath}, that deployment will be cancelled;
+  the next time in ${\bf T}$ will be tried. 
+
+  $S$ -- a \zobj{zsource} to determine how to procure \zobj{zboxen}.
+
+  $E_T$, $E_C$, $E_N$, $E_L$, $E_K$ -- Economy Coefficients (exactly as in \zobj{zdemand})
+
+\end{itemize}
+
+\subsection{zdemand}
+
+A \zobj{zdemand} is a short-hand way of describing a large number of Origin-Destination pairs,
+together with times at which to deploy \zobj{zboxen}
+
+\begin{itemize}
+\item Properties:
+
+  $R$ -- Reporting mode. `S' will report when \zobj{zboxen} are deployed. `P' will detail the path choice. 
+
+%Removed 2018-07-17.
+%  $R_n$ -- Report the shortest $R_n$ paths of the path distribution. The default is $0$.
+  
+  $S$ -- a \zobj{zsource} to determine how to procure \zobj{zboxen}.\footnote{Do not supply a single-\zobj{zbox} \zobj{zsource} unless it is a prototype.}
+  
+  ${\bf L}$ -- list of zboxen.
+  
+  $T_0$ -- base time, relative to system base time.
+
+  ${\bf D}$ -- A list(4) of tuples $(o,d,T,N)$. \
+  The $o$-$d$ pair will be converted to an intent \zobj{zpath}.
+  The tuples can also be $(o,d,T,N,v)$ or $(o,d,T,N,{\bf v})$, with \zobj{zbox} velocity specified.
+  $T$ is measured with respect to the base time.
+  \footnote{The form with ${\bf v}$ (which is expressed as $v,v,v,v,v$
+    and expresses natural velocity in subsequent zpath containers) is
+    likely useful only for testing, and should not be depended upon.}
+  ${\bf D}$ will be sorted in time before being used; resulting labels in the system will reflect this.
+  
+  $E_T$, $E_C$, $E_N$, $E_L$, $E_K$ -- Economy Coefficients -- Path
+  Economy $E$ is dependent linearly on time, cost, number of
+  \zobj{zboxen} visited, number of \zobj{zlinks} traversed, and number
+  of container \zobj{zboxen} on \zobj{zpaths} utilised. These are the
+  coefficients. If omitted, default values of $0.05$, $1.0$, $1.0$,
+  $0.0$, $12.0$.
+
+%Removed 2018-07-17.
+%  $P_r$ -- Resolution type for \zobj{zpaths} which are resolved for the various $o$--$d$ pairs.
+%  Possibilities include a non-negative integer for the ranked lowest-$E$ path only,
+%  and $B$ for Boltzmann distribution $e^{-E}$ where $E$ is the Economy. The default is $1$
+%  so that the \zobj{zbox} is sent on the best resolved path only. If $P_r$ is specified
+%  in this way, but $P_r$ number of paths are not available, then the last (worst) path will be
+%  utilised.
+
+%  In the case of a distribution, if the \zobj{zbox} has Presence, then
+%  the different paths in the distribution will be taken by different
+%  clones. (Not implemented yet)
+
+  
+\end{itemize}
+Here, $o$ and $d$ are integer references ($0\dots$) into ${\bf L}$ to specify the
+origin and destination \zobj{zboxen}.
+$T$ is a time to initialise a \zobj{zbox} with this travel intent at $\zbox{o}$.
+As many as $N$ \zobj{zboxen} are initialised from $\zbox{o}$ at time $T$ (relative to $T_0$), depending on availability.
+
+\subsection{zsource}
+\label{sec:zsource}
+A \zobj{zsource} is used in objects like \zobj{zdemand} or
+\zobj{zschedule} to choose a \zobj{zbox} for deployment.
+
+\begin{itemize}
+\item Properties:
+  $\zbox{\varphi}$ -- A \zobj{zbox}.
+
+  $m$ -- Mode: One, From.
+  \begin{itemize}
+    \item One: $\zbox{\varphi}$ is a \emph{particular} \zobj{zbox} to send on the \zobj{zpath}.
+
+    \item From: $\zbox{\varphi}$ is a particular \zobj{zbox} \emph{from} which to procure $\zobj{zboxen}$
+      of the proper type $(A,n)$ for use on the \zobj{zpath} $P$.
+  \end{itemize}
+
+  $o$ -- Origin: Container, Teleport
+
+  $v_\mu$, $v_\sigma$ -- Optional specification of velocity distribution.
+  Whenever this \zobj{zsource} is used to procure a \zobj{zbox}, a velocity is chosen from
+  a log-normal distribution with mean $v_\mu$ and standard deviation $v_\sigma$.
+  That is, $\textup{Lognormal}(\mu,\sigma^2)$ with
+  \[
+    \mu = \log v_\mu - \frac12\log \big(\frac{v_\sigma^2}{v_\mu^2} + 1\big),\ \ \   \sigma^2
+      = \log\big( \frac{v_\sigma^2}{v_\mu^2} + 1 \big)
+  .\]
+  This is \emph{overridden} by explicit specification of velocities within a
+  \zobj{zdemand} or \zobj{zschedule}. 
+  
+  When either of the above modes selects a prototype \zobj{zbox}, a \emph{copy} is procured.
+  If the origin type is Container, the copy is fabricated inside the
+  prototype's container, so there should be room for it.  If the
+  origin type is instead Teleport, the copy will be placed inside the
+  first container on the relevant \zobj{zpath}.
+
+  Note that a prototype \zobj{zbox} sbould be empty; possibly
+  non-empty prototype \zobj{zboxen} can be supported later.
+
+\end{itemize}
+
+
+
+\section{Server consultation}
+\label{Servers}
+\label{servercon}
+The core simulation involves a small number of types of basic objects
+which interact according to a few basic rules. To a large extent, the
+main philosophy here is that simple properties can produce complex
+behaviour.
+
+Nevertheless, not everything can be encoded purely with \zobj{zboxen}, so
+consultation with external modules is implemented.
+Sophisticated models for route choice or market
+dynamics need not be part of the core.
+
+Core functions include:
+\begin{itemize}
+\item Basic \zobj{zbox} movement and rules using containment and \zobj{zlinks}
+\item Basic \zobj{zbox} deployment through \zobj{zdemand} and \zobj{zschedule}
+\item Shortest-path resolution at microscopic level (i.e.~every \zobj{zbox})
+\end{itemize}
+
+Communication involves reference to various \zobj{zobjects}; this is always by label.
+
+\subsection{Event specification}
+
+Within \zobj{zbox} and \zobj{ztype} there can appear a server-consultation specification $\xi$.
+Consultation is always `with respect to' a \zobj{zbox}
+$\varphi$.  A server is consulted when: (and)
+\begin{itemize}
+  \item The $\xi$ specification of $\varphi$ includes some event indicator $F$
+  \item The $\xi$ mask in the containment-allowance $C$ of the container of $\varphi$ includes $F$
+    ($C$ does not mask modifier flags, as described below, only events).
+  \item The condition $F$ becomes true for $\varphi$.
+\end{itemize}
+
+Each field within $\xi$ can contain one of the following event indicators for a \zobj{zbox} $\varphi$ of \zobj{ztype} $\chi$:
+\begin{itemize}
+\item $C$ -- `containment': $\zbox{\varphi} \hookrightarrow \zbox{\lambda}$, just \emph{after} entry into $\lambda$.
+\item $E$ -- `exit':  $\zbox{\lambda} \curvearrowright \zbox{\varphi}$ just \emph{before} exit from $\lambda$.
+\end{itemize}
+
+Modifier flags may also be present:
+\begin{itemize}
+\item $f$ -- `first to arrive': Adds to $C$ the condition that $\lambda$ is empty before $\zbox{\varphi} \hookrightarrow \zbox{\lambda}$.
+\item $l$ -- `last to leave': Adds to $E$ the condition that $\lambda$ is empty after $\zbox{\lambda} \curvearrowright \zbox{\varphi}$.
+\item $v$ -- `no vacancy': Adds to $C$ the condition that another \zobj{zbox} similar
+  to $\varphi$ would be unable subsequently to enter $\lambda$, due to capacity alone (i.e.~not specific positional configuration).
+  In other words, the condition is that $\varphi$ `fills' the container.
+\item $p$ -- `path': Adds the condition that the container must correspond to the last \zobj{zstop} on $\varphi$'s current \zobj{zpath}.
+\end{itemize}
+
+A server number may also be present. This is an index into the $\Xi$
+list of \zobj{zsystem}, and defaults to $0$ if omitted. As an example,
+`Cf12,Ep2' would indicate consultation with server \#12 on first
+entry, and consultation with server \#2 on exit at end of \inp{zpath}.
+
+\subsection{Request}
+\begin{itemize}
+\item $\varphi$ -- the \zobj{zbox} involved (by label).
+\item $\dots$ -- various information about $\varphi$: $\varphi$'s container,
+  whom $\varphi$ contains, how many contained together, $\varphi$'s \zobj{zpath}, etc.
+\end{itemize}  
+
+A server should always be designed so that if information is missing,
+the request is still accepted and the response is something valid.
+
+\subsection{Response}
+
+The response to \emph{any} server request is some amount of \zobj{zsyntax} language as described in \Secref{inplang},
+with the following embellishment.
+The \zobj{zobjects} specified (always by label) each have an associated insertion mode:
+\begin{itemize}
+\item \emph{Fresh} -- The \zobj{zobject} is inserted into the system. 
+\item \emph{Modification} -- The specified \zobj{zobject} is modified. 
+\item \emph{Fresh-or-Modification} -- If the label is in use, the \zobj{zobject} is modified; otherwise it is fresh. (Reference to the \zobj{zsystem} is always of this type.)
+\item \emph{*Deletion} -- The specified \zobj{zobject} is removed from the system.
+\item \emph{*Copy-and-Modify} -- The specified \zobj{zobject} is duplicated and then modified.
+\end{itemize}
+*These two modes are not yet implemented in the code.
+
+Not all request types are applicable to all \zobj{zobjects}.
+The specific \zobj{zsyntax} for specification of these insertion modes is documented below in \Secref{servconssynt}
+
+Finally, despite the connotation of remoteness and slowness associated with a `server', there is no necessity for
+either of these undesirable properties. Servers may be implemented as local code by a user of the library (and
+implementor of the {\tt zio} interface). These considerations are discussed in \Chapref{Chap:ZimCode} in \Secref{Sec:zimzio}.
+
+
+
+\section{Input language}
+\label{inplang}
+
+The input language \emph{zsyntax} is intended to be universal, but of
+course other input languages could be fashioned which either convert
+to this format or can be compiled separately to object-file format.
+In this section is described the zsyntax \emph{source}
+format, which is also the format for server response as described in
+\Secref{servercon}.
+
+Inputs describe the dynamical system $\Psi$ to be simulated. There are
+also inputs (but fewer, since these are separate from the system)
+which describe \emph{how} to simulate $\Psi$, how to output
+information about $\Psi$ and elements therein, and how to manage
+simulation (starting, stopping, etc.).
+
+All input is via utf-8 text files.\footnote{\texttt{http://utf8everywhere.org}} If a \inp{\#} appears anywhere on a line,
+the remainder of the line is treated as a comment.
+
+\zobj{Zsyntax} input can be split and concatenated among files
+arbitrarily, provided this is done between top-level \zobj{zobjects}.
+
+\zobj{Zsyntax} input files could end with a \inp{.zim} suffix. When
+editing by hand in emacs, \inp{awk-mode} seems to work well for the
+syntax; maybe \inp{cc-mode} is also usable.\footnote{For this reason,
+some of the \inp{.zim} files included in examples begin
+with \inp{\#!awk} as a text-editor hint.}
+
+Properties which are denoted by a Greek letter can be spelled using Roman
+ones, but the converse is not supported.
+
+Time specifications are always one of
+\inp{h:m:s},
+\inp{h:m} or
+\inp{s}.
+Each of \inp{h}, \inp{m} and \inp{s} is a positive decimal number with no bound.  For example, `noon' is any of
+\inp{43200} $\equiv$ \inp{12:00} $\equiv$ \inp{12:00:00} $\equiv$
+\inp{00:720} $\equiv$ \inp{06:360:0}.
+
+The input language here is probably slightly more general that needed,
+so that later expansion or hierarchical structure are not awkward.
+
+Generally, an object definition is expressed inside \inp{[\dots]}, a
+referenced object inside \inp{<\dots>}, and a list of objects by
+\inp{\{\dots\}}. \inp{[\dots]} and \inp{<\dots>} are interchangeable
+anywhere an object is required.
+In any of these constructions, entries are whitespace-separated.  The
+reserved characters \inp{\{\ \} [ ] < > = } and whitespace are solely
+for defining structure, and may not be used in labels or values.
+All non-alphanumeric symbols with unicode $<$ \$100 (Punctuation) are
+reserved for later application, save \inp{\_} which can be
+used, and \inp{- .} which can be used provided they are not the initial
+character.\footnote{The user is free to use cat emoticons, ice-cream cones
+  and smiley faces from unicode pages 499-502, for example.}
+
+Whitespace-separated entries are placed between the \inp{[\dots]}.
+The first such entry is always the object type, such as \inp{zbox}.
+An optional unique\footnote{That is, the label is in a global name
+  space.}  label can appear as the next field, with no
+delimiters.
+
+Labels serve two purposes. Firstly, they can be references within the
+input using \inp{<\dots>}.  Secondly, they can be used in output streams
+to identify objects.  For debugging purposes, it is advisable always
+to provide a label.  In labels, a \inp{/} is added to denote generated
+(as opposed to specified) objects, as noted below.
+
+Following are a number of assignments which are all of the form
+\inp{property=value} to set parameters as described in Section
+\ref{secobjs}.\footnote{Maybe also support \inp{property:value}? Not
+  compatible with insertion-mode labels, though.}  The property can be a symbol, like \inp{z}
+or $\varphi$ (without decoration, since it is a plain text file),
+or can be the name of a property, like \inp{zbox}.\footnote{These
+  will become well-defined later.}
+
+An argument which is not an object or reference (for example, values
+in a list, or something after `=' which is just a number or text) does
+not sport any delimiting notation. To omit an element in an ordered
+list, the placeholder `\inp{.}' is used.
+
+Some examples of what this notation looks like are:\\
+\inp{[zbox Stn\_AMK A=Station C=\{SubStation 1\} ]} \\
+\inp{[zbox SubStn\_AMK\_NB A=SubStation C=\{Train 1 Platform 1\} m=Fifo L=1.0 z=<Stn\_AMK> ]}
+
+\inp{\{\dots\}} contains a list, possibly of objects, possibly of simpler things.
+A list of four \zobj{zboxen} might be expressed as 
+\inp{\{ [zbox tr1 \dots ] [zbox tr2 \dots ] <tr3> <tr4> \dots \}} \\
+which defines the objects \inp{tr1} and \inp{tr2} while referencing \inp{tr3} and \inp{tr4}.
+A \zobj{zlink} could be expressed \\
+\inp{[zlink TrainDoor1 $\mu$=<tr1> $\nu$=<tr2> A=\{Pax . b\}]}.
+
+Lists generally have no element delimiters. Without such separators,
+there is special syntax for structured `pairs' or tuples, as used in
+e.g.~\zobj{zpaths}.  The list \inp{\{\dots\}}
+simply contains the tuple items in order.  A list of three pairs is
+expressed like \inp{\{$a_1$ $b_1$ $a_2$ $b_2$ $a_3$ $b_3$ \}} where
+$a_j$ and $b_j$ are the objects (or references). Thus, the list
+notation \inp{\{\dots\}} is required even for a single tuple.
+
+Lists which are \emph{not} lists of objects (i.e.~lists which contain
+only simple fields like numbers or flags) have a default element
+length, which is supplied in paranthesis in the list description, but
+can in some cases be given optional parameters.  The default element
+length is used if no delimiters are present (e.~g.~ the \zobj{ztype}
+$C$ list defaults to $(A,n)$ pairs).  Optionally, a list can be
+expressed so that various lengths of tuples can be expressed easily.
+This is implemented as the \emph{sed}-inspired form \inp{\{/ a b c / a
+  b c d / a b c / a b c d e /\} } for a list of four elements which
+happen to be a 3-, 4-, 3-, and 5-tuple.  Lists like \zobj{ztype} $C$
+and \zobj{zdemand} $D$ require this feature.
+
+\subsection{Specific input notation}
+
+\begin{itemize} 
+
+% Alas, there seems to be a bug in lstlisting; n_$\xi$ -> $\xi$n_  !?
+% So here we use {\tt and $$ instead.
+%
+\item \zobj{zsystem} \\
+%\begin{lstlisting}[mathescape]
+{\tt [zsystem label T\_0=... t\_0=... t\_1=... ]}
+%\end{lstlisting}
+
+The objects in the system are not specified within this; all the objects simply appear elsewhere
+in the input streams.
+
+It is usual to specify $T_0$ as $0$ or 00:00 and then, for example,
+specify \inp{t\_0=08:00} and \inp{t\_1=18:30}.
+
+
+\item \zobj{ztype} \\
+%\begin{lstlisting}[mathescape]
+{\tt [ztype A=... n=... C=... S=... m=... L=... W=... $\sigma$=... V=... l=... 
+  c=... v=... $\pi$=... R=... $\rho$=... $\rho$\_0=... $\xi$=... n\_$\xi$=... ]} \\ 
+%\end{lstlisting}
+Synonyms: \inp{[ sigma=... pi=... rho=... rho\_0=... xi=... n\_xi=... ]}
+
+$R$ is a combination of $S$, $C$ and $P$ for `Self', `Container' and `Path'.
+
+The server-contact specifications $\xi$ are written as a comma-separated list.
+  An example would be \inp{ $\xi$=Cf1,Ep2 }.
+
+\item \zobj{zbox} \\
+%\begin{lstlisting}[mathescape]
+{\tt [zbox label i=... R=... A=... n=...  s=... z=... x=... Z=... P=... i\_P=...
+ S=... L=... W=... N=... l=... $\pi$=...  v=... ] }
+%\end{lstlisting}
+
+  $S$, $L$, $W$, $N$ and $l$ are implemented as integers, while $V$,
+  $x$ and $v$ are floating-point.  The use of integers is so that used
+  space inside a \zobj{zbox} can be accumulated without error or
+  recalculation.
+
+  $z$ or $Z$ are specified; when $z_\varphi = \lambda$,
+  $\varphi \in Z_\lambda$ is implied, and vice versa. It is invalid to specify that a
+  given \zobj{zbox} is contained (directly) in more than one other.
+
+  $\pi$ should be $0$ or $1$ and is taken as $0$ if omitted.
+
+  $i_P$ only makes sense if $P$ is specified; it defaults to zero.
+
+  Synonyms: \inp{[zb  sigma=... pi=... ]}
+
+\item \zobj{zlink} \\
+%\begin{lstlisting}[mathescape]
+{\tt [zlink label $\mu$=... $\nu$=... A=... ] }
+%\end{lstlisting}
+
+  Synonyms: \inp{[zl mu=\dotss nu=\dotss ]}
+
+\item \zobj{zpath} \\
+%\begin{lstlisting}[mathescape]
+{\tt [zpath label A=... n=... $\Lambda$=... m=... t=... ] }
+%\end{lstlisting}
+
+  Synonyms: \inp{[zp Lambda=\dotss]}
+
+\item \zobj{zstop} \\
+%\begin{lstlisting}[mathescape]
+{\tt [zstop label $\varphi$=... K=... $\sigma$\_i=... $\sigma$\_f=... i=... j=... ] }
+%\end{lstlisting}
+
+  Synonyms: \inp{[zs phi=\dotss sigma\_i=\dotss sigma\_f=\dotss ]}
+
+\item \zobj{zsource} \\
+%\begin{lstlisting}[mathescape]
+{\tt [zsource label $\phi$=... m=... o=... v\_$\mu$=... v\_$\sigma$=... ] }
+%\end{lstlisting}
+
+  Synonyms: \inp{[ phi=\dotss v\_mu=\dotss v\_sigma=\dotss]}
+
+\item \zobj{zschedule} \\
+%\begin{lstlisting}[mathescape]
+{\tt [zschedule label R=... T\_0=... T=... P=...  S=...  E\_T=... E\_C=... E\_N=... E\_L=... E\_K=... P\_r=... ]}
+%\end{lstlisting}
+  
+  Synonyms: \inp{[zsch ]}
+
+\item \zobj{zdemand} \\
+%\begin{lstlisting}[mathescape]
+{\tt [zdemand label R=... R\_n=... S=... L=... T\_0=... D=...  Reference=... Cache=... E\_T=... E\_C=... E\_N=... E\_L=... E\_K=... P\_r=... ]}
+%\end{lstlisting}
+  
+  If a prototype has a label, the deployed \zobj{zboxen} will receive
+  the same label with \inp{/} and a natural number appended.
+
+  Here \inp{Reference} is a string containing \inp{\%s}, which will be
+  replaced with the entry in \inp{L} to get the actual \zobj{zbox}
+  Label.  Thus, \inp{Reference=\%s} will just use the \inp{L} labels
+  directly and is the default.
+
+  \inp{Cache} is either \inp{true} or \inp{false} and indicates
+  whether resolved \zobj{zpaths} are to be cached.
+
+\end{itemize}
+
+\subsection{Server consultation}
+\label{servconssynt}
+The event mask \inp{$\xi$} is specified as a combination of the event
+letters (uppercase) \inp{C E \dotss}.  When appearing in a list,
+without assignment, the value of $\xi$ is again just a combination of
+those letters, with \inp{.}  as a placeholder if no flags are
+specified.
+
+In server responses, the insertion mode is specified via a label prefix, as
+described in the table.
+
+\vspace{0.5cm}
+%\begin{widetext}
+\begin{tabular}{lll}
+  Function & Label syntax & Description \\
+  \hline
+  Fresh            &                 & Creates an unlabeled zobject.                  \\
+  Fresh-or-Modification &  \inp{Label}    & If label exists, like \inp{M:} otherwise like \inp{F:}.     \\
+  Fresh            &  \inp{F:Label}  & If label exists, request is ignored.           \\
+  Modification     &  \inp{M:Label}  & If label does not exist, request is ignored.   \\
+  *Deletion         &  \inp{D:Label}  & If label does not exist, request is ignored.   \\
+  *Copy-and-Modify  &  \inp{C:Label:NewLabel} & If label does not exist, ignored.      \\
+  \hline
+\end{tabular}
+%\end{widetext}
+\vspace{0.5cm}
+
+* These ones are not yet implemented. Also, `ignoring'
+as described is not implemented; an error will be flagged.
+The user should see the source code for details (\Chapref{Chap:ZimCode}).
+
+\section{System Integration}
+\label{sysinteg}
+
+System integration is implementation-dependent.
+In the present implementation, two Interfaces are defined:
+\begin{itemize}
+\item \inp{zim} Interface. The Zimulator implements this, so that it
+  may be called for simulation.
+\item \inp{zio} Interface. The Zimulator requires an external
+  implementation of this to communicate with the wider system, and
+  will use it for all IO operations. \inp{zio} contains functions for
+  Verbosity, Reporting, \zobj{zserver} communication, and state
+  storage and retrieval.
+\end{itemize}
+
+As mentioned in \Secref{zsystemsec}, within the \zobj{zsystem}
+specification is a list of \zobj{zservers}, each with an
+\emph{identifier}.  This identifier is simply a string used to
+identify the \zobj{zserver}; it is passed to the server-consultation
+method in the \inp{zio} interface. The identifier could be a name like
+\inp{server5}, URI like \inp{http://zserver.ibm.com/somthing/else}, or
+anything at all. The meaning is \emph{not defined} within the Zimulator
+specification.
+
+\subsection{Command-line invocation}
+
+The Zimulator core supports only the calls defined in the \inp{zim} interface.
+A command-line interface is supplied as a separate tool and is described in \Chapref{Chap:CLI}.
+
+\section{Object files}
+\label{ObjFileFormat}
+
+The object-file format is written by and read by only the core
+simulation; object files are not expected to be exposed to servers or
+other tools.
+
+Typical object code stores in compact (i.e.~byte-level, not text) format the state of the whole system,
+so that:
+\begin{itemize}
+\item Simulation from $t_A$  until $t_C$ results in system state $S_C$.
+\item Simulation from $t_A$ until $t_B$, storing the state $S_B$ in an object file, and
+  then subsequently loading the state $S_B$ from the file, and simulating until time $t_C$
+  results in the same system state $S_C$.
+\end{itemize}
+Minor deviation from this exact `associativity' is allowed (at least
+on the order of `double-precision' calculation).
+
+As it stands, the precise object-file format
+is \emph{implementation-dependent}; documentation should be available
+in the source-code for that implementation. It is not intended to
+store object files such that they are then used elsewhere.
+
+\section{Core dynamics}
+\label{core}
+
+Zboxen interact via simple rules; `time' is always present, so the state of
+the system evolves in time.
+
+\subsection{Time evolution of system}
+
+In some simulations time is simply discretised and the system is
+stepped by $\Delta t$ repeatedly, noting various interactions among
+elements at each time step.
+
+The implementation could operate in one of the following ways:
+
+\begin{itemize}
+
+\item Time steps
+  This is the trivial $t \rightarrow t + \delta t$ at each time step,
+  with $\delta t $ chosen so that the problem at hand is sufficiently approximated. 
+  
+\item Time intervals
+
+This amounts to choosing $\Delta t$ to be the interval until the next `transition'
+in the system, and extrapolating all behaviour within this interval. Then,
+$t \rightarrow t + \Delta t$ where $\Delta t$ is not necessarily small.
+Only objects in the system which are involved in the transition are processed.
+  
+\item Discrete -- Changes of state (which depend on existence of
+  \zobj{zlinks} and configurations of \zobj{zboxen}.) These changes
+  are instantaneous.
+
+\item Continuous -- Movement within a container. This is not
+  parametrised as discrete steps, but as linear Ranges $x_1,t_1
+  \rightarrow x_2,t_2$.
+\end{itemize}
+
+The Reference Implementation operates in this way.
+As a detail, it is noted that at any given instant in time,
+\begin{itemize}
+\item More than one container may be anticipated to satisfy an entry condition.
+\item More than one \zobj{zbox} may be competing for entry into a given container.
+\item In general, $n$ \zobj{zboxen} may be competing for entry into $m$ container \zobj{zboxen}.
+\end{itemize}
+
+\section{Reporting outputs}
+\label{secrep}
+
+\emph{Reporting} is specific and precise, whereas \emph{verbose} output
+is for human use in debugging and tuning a system.
+Reporting must be unambiguous, expandable, and easy to parse.
+Therefore every report line has the following structure:
+
+{\tt R: objtype var=val var=val ...}
+
+Some variables will always be present, so the minimum output line is of the form:
+
+{\tt R: objtype ztype=\dotss t=\dotss }
+
+where $t$ is the system time. {\tt objtype} is one of {\tt zbox}, {\tt zpath}, {\tt zsystem}, etc.).
+
+Various objects within the system can report on their progress and state.
+`S' indicates generic output and valid whereved $R$ can be specified.
+The most important example is a \zobj{zbox}.
+
+To the {\tt ztype} variable will be assigned {\tt A,A',n} where $A$ is
+the \zobj{ztype} name, and $A'$ is a unique positive integer assigned
+to that name at runtime. Other variables reported include:
+
+`S' mode: {\tt x0 t0 x1 t1 l z.L o state label z.label}
+
+`C' mode: {\tt z.n Z.n }
+
+`P' mode: {\tt K}
+
+Here $o$ is the containment position (i.e.~how many zboxen are in
+front), and $n$ is the total containment number (i.e.~how many are
+contained in total).  $state$ is the \zobj{zbox} state, which will be $M$,
+$D$ or $S$. The $S$ state does not indicate movement, but is a discrete
+element of the state machine. In the the $M$ or $D$ states,  \inp{x0 t0 x1 t1} will be
+present, describing the current free movement between $(x_0,t_0)$ and $(x_1,t_1)$.
+$M$ indicates a general movement within a container; $D$ indicates the last such movement
+before shifting out of the present container is allowed. This is enough information
+for interpretation of these report variables in the context of model simulation;
+for internal details of the \zobj{zbox} state machine the use is of course referred
+to the source code, outlined in \Chapref{Chap:ZimCode}.
+
+To streamline parsing of reported information, any object may issue its reporting
+lines on a particular \emph{channel}, by including a decimal number within
+the $R$ specification (this is mentioned above in describing the \zobj{zbox} object).
+If the channel number is omitted, it defaults to $0$.
+The reporting channel is specified when calling the user's implementation of the
+{\tt sendReportLine()} function within the {\tt zio} interface.
+
+The flag `d' can be added to increase greatly the detail level; this
+seature is primarily useful for debugging the specification of a
+system.
+
+As an example, suppose a \zobj{zbox} is specified with
+{\tt R=SC10d }.
+Then, this particular \zobj{zbox} will issue very detailed report lines on reporting channel 10, containing
+information about its own state and also its container.
+Suppose a \zobj{ztype} includes the specification {\tt R=S8};
+then all \zobj{zboxen} of this type which do not override $R$ will
+report their basic movements and state information on channel $8$.
+
+Example output lines will be shown in \Chapref{Chap:Madrid} in the context of the Madrid Metro model.

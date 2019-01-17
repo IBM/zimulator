@@ -1,0 +1,58 @@
+#!awk
+#
+# 2018-08-27
+# Zimulator simple demonstration.
+#
+# Demand from Entrance to Exit + also Peter must walk through five rooms, A,B,C,D,E.
+# Rooms from B onwards do not exist a-priori. Peter connects to server and creates them.
+# People begin just outside the entrance to room A every few seconds.
+# People eventually exit room E and leave the system.
+
+#
+# The system.
+#
+[zsystem
+ FiveRooms T_0 = 0 t_0 = 06:00 t_1 = 12:30 Δt = 600 R=S
+ Ξ = {  # In command-line mode, server identifiers are URLs:
+     http://127.0.0.1/~pwm/Zim/test.cgi?mode=5Rooms                  # server 0
+	 http://127.0.0.1/~pwm/Zim/test.cgi?mode=5Rooms&submode=newroom  # server 1
+	 }
+    ]
+#
+# Types of zboxen.
+#
+[ztype A=entryway n=1 m=Bag C={pax 1} L=500 ]
+[ztype A=exit n=1 m=Sink C={pax 1} ]
+[ztype A=room n=1 m=Pipe C={/ pax 1 CE /} L=50 N=10]
+[ztype A=pax n=1 l=1 v=0.24  Z={room 1} ]
+
+#
+# Rooms and connectivity. Only the first room is supplied.
+#
+[zbox Entrance A=entryway n=1 ]
+[zlink μ=<Entrance> ν=<RoomA> A={pax . 1}]
+[zbox RoomA A=room n=1 ]
+
+#
+# Send Peter through on an explicit path at 06:10
+#
+# Peter has the responsibility of building rooms, by contacting the server.
+#
+[zbox Peter A=pax n=1 z=<Entrance> ξ=C1 ]  # Override 'pax' ztype with ξ bit for leaving. Contact server #1.
+
+#[zpath ExplicitRoomTour A=pax n=1 m=Open t=Plan 
+# Λ={ [zs φ=<Entrance>] [zs φ=<RoomA>]  [zs φ=<RoomB>]  [zs φ=<RoomC>] [zs φ=<RoomD>]  [zs φ=<RoomE>]  [zs φ=<Exit>] } ]
+
+# Only explicit path is to room A.
+[zpath ExplicitRoomTour A=pax n=1 m=Open t=Plan Λ={ [zs φ=<Entrance>] [zs φ=<RoomA>] } ]
+
+[zschedule SendPeter T_0=00:00:00 
+ S=[zsource JustPeter m=One φ=<Peter> o=Teleport ]
+ P=<ExplicitRoomTour> T={ 06:10 } ]
+
+#
+# Prototype and Source to generate people
+#
+#[zbox PaxProto A=pax n=1 π=1 R=SCP]
+#[zsource PaxSource m=One o=Teleport φ=<PaxProto>]
+

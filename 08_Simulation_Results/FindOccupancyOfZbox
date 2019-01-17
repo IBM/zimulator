@@ -1,0 +1,113 @@
+#!/bin/gawk -f
+
+BEGIN{
+    if (ARGC<4) {usage();exit;}
+    Mode = tolower(ARGV[1]);
+    ContLabel = ARGV[2];
+    InpFile = ARGV[3];
+    ARGC=0;
+    if ((Mode!="in") && (Mode!="of"))
+    {
+	usage();
+	exit;
+    }
+    if (Mode=="in")
+    {
+	print "# Reading [" InpFile "] to see occupancy of zbox inside [" ContLabel "].";
+    }
+    else
+    {
+	print "# Reading [" InpFile "] to see occupancy of zbox [" ContLabel "].";
+    }
+    
+    FindOccupancy(InpFile,ContLabel,Mode);
+}
+
+function usage()
+{
+    print "Usage:";
+    print "$ ./FindOccupancyOfZbox MODE Label ReportFile.zo";
+    print "MODE: 'of' -- Finds reported Pax occupancy of the zbox 'Label'.";
+    print "      e.g. Provide a _Pf_ zbox to see the crowd at a platform:";
+    print "   $ ./FindOccupancyOfZbox of DEL_Pf_L10_1 out/madrid_02.zo";
+    print "MODE: 'in' -- Finds reported Pax occupancy of any zbox entering zbox 'Label'";
+    print "      e.g. Provide a _Bn_ or _Trk_ zbox to see the crowd on a train when arriving or leaving a station:";
+    print "   $ ./FindOccupancyOfZbox in DEL_Bn_L10_1 out/madrid_02.zo";
+    print "Output CSV:";
+    print "time[sec],time[hms],Container,Occupancy";
+    print "";
+};
+
+function FindOccupancy(InpFile,LLabel,Mode,  lin,lina,ztype,timesec,npax,t,lastt,lastocc,comm,D,label,trn)
+{
+    lastt=0;
+    lastocc=0;
+    comm = "cat \"" InpFile "\" | grep \"" LLabel "\"";   # Do this step with fast grep.
+    while (0<(comm | getline lin))
+    {
+	#R: zbox ztype=Pax,9,1 t=18266.0 R=- state=M Z.n=0 label=Pax/12493 z.label=LAO_GtCo_4 z.L=78 z.W=15 t0=18266.0 x0=0.0 t1=18266.0 x1=0.0 δt=0.0 l=1 L=0 z.n=46
+	split(lin,lina);
+	if (lina[1]!="R:") {continue;}
+	if (lina[2]!="zbox") {continue;}
+	if (Mode=="in")
+	{
+	    label = GetVal(lin,"z.label");
+	    if (label != LLabel) {continue;}
+	    # Must be on transition into Bn: D="⤷ PDC_Bn_L1_0"
+	    D = GetVal(lin,"D");
+	    if (D!="⤷ " LLabel) {continue;}
+	    trn=GetVal(lin,"label");
+	    npax = GetVal(lin,"Z.n");  # inside the train.
+	    timesec = GetVal(lin,"t");
+	    t = int(timesec);
+	    print t "," hms(t) "," trn "," npax;
+	}
+	else if (Mode=="of")
+	{
+	    label = GetVal(lin,"z.label");	    
+	    if (label != LLabel) {continue;}  # Pf.
+	    npax = GetVal(lin,"z.n");
+	    timesec = GetVal(lin,"t");
+	    t = int(timesec);
+	    if (t!=lastt)
+	    {
+		if (lastt!=0)
+		{
+		    print lastt "," hms(lastt) "," label "," lastocc;
+		}
+	    }
+	    lastt=t;
+	    lastocc=npax;
+	}
+	fflush();
+    }
+    close(InpFile);
+}
+
+function hms(sec,   h,m,s)
+{
+    h = int(sec/3600);
+    m = int(sec/60) % 60;
+    s = sec % 60;
+    if (m<10) {m="0" m;}
+    if (s<10) {s="0" s;}
+    return(h ":" m ":" s);
+};
+
+function GetVal(s,v,   x)
+{
+    s=s " ";
+    x=index(s,v "=");
+    if (x==0) {return("");}
+    s=substr(s,x+length(v)+1,length(s));
+    if (substr(s,1,1)=="\"")
+    {
+	s=substr(s,2,length(s));
+	x=index(s,"\"");
+	s=substr(s,1,x-1);
+	return(s);
+    }
+    x=index(s," ");
+    s=substr(s,1,x-1);
+    return(s);
+};

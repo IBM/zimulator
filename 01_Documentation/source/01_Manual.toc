@@ -1,0 +1,72 @@
+\contentsline {chapter}{\numberline {1}Introduction}{4}{chapter.1}
+\contentsline {chapter}{\numberline {2}Abstracted simulator}{5}{chapter.2}
+\contentsline {section}{\numberline {2.1}Zimulator}{5}{section.2.1}
+\contentsline {subsection}{\numberline {2.1.1}Implementation}{5}{subsection.2.1.1}
+\contentsline {section}{\numberline {2.2}Specification}{6}{section.2.2}
+\contentsline {subsection}{\numberline {2.2.1}zsystem}{6}{subsection.2.2.1}
+\contentsline {subsection}{\numberline {2.2.2}ztype}{7}{subsection.2.2.2}
+\contentsline {subsection}{\numberline {2.2.3}zbox}{8}{subsection.2.2.3}
+\contentsline {subsubsection}{Containment modes}{8}{section*.2}
+\contentsline {subsection}{\numberline {2.2.4}zlink}{9}{subsection.2.2.4}
+\contentsline {subsubsection}{Neighbourhoods}{9}{section*.3}
+\contentsline {subsection}{\numberline {2.2.5}zpath}{10}{subsection.2.2.5}
+\contentsline {subsection}{\numberline {2.2.6}zstop}{10}{subsection.2.2.6}
+\contentsline {subsection}{\numberline {2.2.7}zschedule}{11}{subsection.2.2.7}
+\contentsline {subsection}{\numberline {2.2.8}zdemand}{11}{subsection.2.2.8}
+\contentsline {subsection}{\numberline {2.2.9}zsource}{11}{subsection.2.2.9}
+\contentsline {section}{\numberline {2.3}Server consultation}{12}{section.2.3}
+\contentsline {subsection}{\numberline {2.3.1}Event specification}{12}{subsection.2.3.1}
+\contentsline {subsection}{\numberline {2.3.2}Request}{12}{subsection.2.3.2}
+\contentsline {subsection}{\numberline {2.3.3}Response}{13}{subsection.2.3.3}
+\contentsline {section}{\numberline {2.4}Input language}{13}{section.2.4}
+\contentsline {subsection}{\numberline {2.4.1}Specific input notation}{14}{subsection.2.4.1}
+\contentsline {subsection}{\numberline {2.4.2}Server consultation}{15}{subsection.2.4.2}
+\contentsline {section}{\numberline {2.5}System Integration}{15}{section.2.5}
+\contentsline {subsection}{\numberline {2.5.1}Command-line invocation}{15}{subsection.2.5.1}
+\contentsline {section}{\numberline {2.6}Object files}{16}{section.2.6}
+\contentsline {section}{\numberline {2.7}Core dynamics}{16}{section.2.7}
+\contentsline {subsection}{\numberline {2.7.1}Time evolution of system}{16}{subsection.2.7.1}
+\contentsline {section}{\numberline {2.8}Reporting outputs}{16}{section.2.8}
+\contentsline {chapter}{\numberline {3}Zimulator code}{18}{chapter.3}
+\contentsline {section}{\numberline {3.1}Source files and structure}{18}{section.3.1}
+\contentsline {section}{\numberline {3.2}{\tt zim} and {\tt zio} interfaces}{19}{section.3.2}
+\contentsline {chapter}{\numberline {4}Command-line interface}{21}{chapter.4}
+\contentsline {section}{\numberline {4.1}CLI source code}{21}{section.4.1}
+\contentsline {section}{\numberline {4.2}CLI usage}{21}{section.4.2}
+\contentsline {chapter}{\numberline {5}Toy examples}{23}{chapter.5}
+\contentsline {section}{\numberline {5.1}Four pipes and a span}{23}{section.5.1}
+\contentsline {subsection}{\numberline {5.1.1}Execution}{24}{subsection.5.1.1}
+\contentsline {chapter}{\numberline {6}Metro systems}{27}{chapter.6}
+\contentsline {section}{\numberline {6.1}Modelling a metro system}{27}{section.6.1}
+\contentsline {subsection}{\numberline {6.1.1}Representation}{27}{subsection.6.1.1}
+\contentsline {subsection}{\numberline {6.1.2}zsyntax files}{28}{subsection.6.1.2}
+\contentsline {subsection}{\numberline {6.1.3}Simulator input files}{28}{subsection.6.1.3}
+\contentsline {subsection}{\numberline {6.1.4}System parameters}{29}{subsection.6.1.4}
+\contentsline {subsection}{\numberline {6.1.5}Calibration}{30}{subsection.6.1.5}
+\contentsline {chapter}{\numberline {7}Madrid Metro}{31}{chapter.7}
+\contentsline {section}{\numberline {7.1}Madrid Metro}{31}{section.7.1}
+\contentsline {subsection}{\numberline {7.1.1}Metro system public data}{31}{subsection.7.1.1}
+\contentsline {subsection}{\numberline {7.1.2}Synthetic data}{32}{subsection.7.1.2}
+\contentsline {subsection}{\numberline {7.1.3}Station template}{32}{subsection.7.1.3}
+\contentsline {subsection}{\numberline {7.1.4}zsyntax files}{32}{subsection.7.1.4}
+\contentsline {subsubsection}{Static types: {\tt 00\_StaticTypes.zim}}{32}{section*.4}
+\contentsline {subsubsection}{Station descriptions: {\tt \_01\_Stations.zim}}{34}{section*.5}
+\contentsline {subsubsection}{Track network: {\tt \_02\_Tracks.zim}}{34}{section*.6}
+\contentsline {subsubsection}{Train trajectories: {\tt \_03\_Paths.zim}}{35}{section*.7}
+\contentsline {subsubsection}{Train schedules: {\tt \_04\_Schedules.zim}}{35}{section*.8}
+\contentsline {subsubsection}{Passenger demand: {\tt \_05\_Demand.zim}}{35}{section*.9}
+\contentsline {subsection}{\numberline {7.1.5}Running the simulation}{36}{subsection.7.1.5}
+\contentsline {subsection}{\numberline {7.1.6}Simulation output}{39}{subsection.7.1.6}
+\contentsline {chapter}{\numberline {8}Calibration}{40}{chapter.8}
+\contentsline {section}{\numberline {8.1}Travel-time tool}{40}{section.8.1}
+\contentsline {section}{\numberline {8.2}Synthetic reference data}{40}{section.8.2}
+\contentsline {section}{\numberline {8.3}Comparison}{40}{section.8.3}
+\contentsline {section}{\numberline {8.4}Objective}{41}{section.8.4}
+\contentsline {section}{\numberline {8.5}Calibration}{42}{section.8.5}
+\contentsline {section}{\numberline {8.6}Running calibration}{43}{section.8.6}
+\contentsline {section}{\numberline {8.7}Calibrated model}{43}{section.8.7}
+\contentsline {chapter}{\numberline {9}Simulation results}{44}{chapter.9}
+\contentsline {section}{\numberline {9.1}Travel-time distribution}{44}{section.9.1}
+\contentsline {section}{\numberline {9.2}Platform occupancy}{44}{section.9.2}
+\contentsline {section}{\numberline {9.3}Train occupancy}{45}{section.9.3}
+\contentsline {section}{\numberline {9.4}An event and consequences}{46}{section.9.4}

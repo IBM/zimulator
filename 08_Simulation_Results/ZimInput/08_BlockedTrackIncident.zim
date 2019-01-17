@@ -1,0 +1,24 @@
+#!awk
+
+#
+# Block Trk_L10_1_DEL_JVJ so that it cannot be used for 20 minutes at 07:30 - 07:50
+#
+# Trk_L10_1_DEL_JVJ looks like this:
+# [zbox Trk_L10_1_DEL_JVJ i=latlon2:40.3452443,-3.8121102,40.3498463,-3.8071962 L=725.73 A=Track n=1 ]
+# Trains look like this:
+# [ztype A=Train n=1 q=1 C = { Pax 1 } m=Bag l=100 L=1380 N=1380 S=0 χ=<TrainDoors> v=10 R=S1d ]
+# So, to block it for 20 minutes, velocity must be:
+# (725.73 - 100) / (20 * 60) = 0.521
+
+[zbox Blockage A=Train n=1 v=0.521 ]
+[zbox BlockageWaitingRoom A=TrainSource n=1]
+[zlink μ=<BlockageWaitingRoom> ν=<Trk_L10_1_DEL_JVJ> A={ Train . 1 } ]
+[zlink μ=<Trk_L10_1_DEL_JVJ> ν=<BlockageSink> A={ Train . 1 } ]
+[zbox BlockageSink A=TrainSink n=1]
+# So it can disappear:
+# So it can parform the above on time:
+[zschedule Deploy_Blockage
+ S = [zsource φ=<Blockage> m=One o=Teleport ]
+ P = [zpath A=Train n=1 m=Open Λ={ [zstop φ=<BlockageWaitingRoom>] [zstop φ=<Trk_L10_1_DEL_JVJ>] [zstop φ=<BlockageSink>] } ]
+ T_0=0 T={ 07:30 } ]
+

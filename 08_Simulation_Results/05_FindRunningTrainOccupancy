@@ -1,0 +1,23 @@
+#!/bin/bash
+
+if [ -z "$1" ]
+then
+    echo "Usage:"
+    echo "$ ./05_FindRunningTrainOccupancy Label_of_Train_zbox ReportFile.zo"
+    echo "Occupancy of the train travelling through the system; provide a single Train zbox."
+    echo "Output CSV:"
+    echo "time[sec],time[hms],Train,Pax"
+    echo ""
+    echo "Example:"
+    echo "$ ./05_FindRunningTrainOccupancy Train_proto/L3/2 out/madrid_08.zo"
+    exit
+fi
+
+#
+# This script is identical to 02_FindPlatformOccupancy really.
+#
+
+TrnLabel="$1"
+InpFile="$2"
+echo "# Reading [""$InpFile""] to see occupancy of trains entering [""$TrnLabel""].";
+./FindOccupancyOfZbox of "$1" "$2"

@@ -1,0 +1,88 @@
+#!awk
+#
+# Zimulator demonstration: 'Ball' and 'Room' zboxen.
+#   Span: non-interacting.
+#   Pipe: disallow overlapping.
+#
+[zsystem PipeTest T_0 = 0  t_0 = 00:00  t_1 = 12:30  Δt = 30  R=S ]
+#
+# Define some types of rooms we will have
+#
+[ztype A=piperoom n=1 m=Pipe C={Ball 1} L=90 ]
+[ztype A=piperoomslow n=1 m=Pipe C={Ball 1} L=90 V=3.1 ]
+[ztype A=spanroom n=1 m=Span C={Ball 1} L=90 V=3.1 ]
+[ztype A=exitsink n=1 m=Sink C={Ball 1}]
+[ztype A=Ball n=1 l=20 v=5 R=SCPd]
+#
+# Define a prototype ball to copy, and a source which contains it.
+#
+[zbox BallProto A=Ball n=1 π=1 ]
+[zsource BallSource m=One o=Teleport φ=<BallProto>]
+#
+# Define five Rooms and also an End room.
+# Define sequential zlinks 1-2-3-4-5-E.
+#
+[zbox Room1 A=piperoom n=1 ]
+[zlink μ=<Room1> ν=<Room2> A={Ball . 1}]
+[zlink μ=<Room1> ν=<Room3> A={Ball . 1}] # zlink also from 1-3.
+[zbox Room2 A=spanroom n=1 ]
+[zlink μ=<Room2> ν=<Room3> A={Ball . 1}]
+[zbox Room3 A=piperoom n=1 ]
+[zlink μ=<Room3> ν=<Room4> A={Ball . 1}]
+[zlink μ=<Room3> ν=<Room5> A={Ball . 1}] # zlink also from 3-5.
+[zbox Room4 A=piperoomslow n=1 ]
+[zlink μ=<Room4> ν=<Room5> A={Ball . 1}]
+[zbox Room5 A=piperoom n=1 ]
+[zlink μ=<Room5> ν=<RoomEnd> A={Ball . 1}]
+[zbox RoomEnd A=exitsink n=1 ]
+#
+# Define a zpath which visits all rooms in order.
+#
+[zpath RoomTour1 A=Ball n=1 m=Open
+ Λ={  # 'Λ' is a list of zstops.
+     [zstop φ=<Room1>] # Each zstop specifies a zbox in which containment is required.
+     [zstop φ=<Room2>]
+     [zstop φ=<Room3>]
+     [zstop φ=<Room4>]
+     [zstop φ=<Room5>]
+     [zstop φ=<RoomEnd>]
+ } ]
+[zpath RoomTour1a A=Ball n=1 m=Open
+ Λ={  # 'Λ' is a list of zstops.
+     [zstop φ=<Room1>] # Each zstop specifies a zbox in which containment is required.
+     [zstop φ=<Room2>   σ_i=0.1 σ_f=0.9 ] # test σ feature here.
+     [zstop φ=<Room3> σ_i=0.05 σ_f=0.9 ]
+     [zstop φ=<Room4> σ_i=0.05] 
+     [zstop φ=<Room5>]
+     [zstop φ=<RoomEnd>]
+ } ]
+#
+# Another zpath which skips rooms 2,4.
+#
+[zpath RoomTour2 A=Ball n=1 m=Open Λ={ [zstop φ=<Room1>] [zstop φ=<Room3> σ_i=0.2] [zstop φ=<Room5> σ_i=0.05 ]  [zstop φ=<RoomEnd>] } ]
+
+# The above does not quite work properly; arbitrary insertion and removal positions σ_i and σ_f are not yet fully implemented.
+#[zpath RoomTour2 A=Ball n=1 m=Open Λ={ [zstop φ=<Room1>] [zstop φ=<Room3> σ_i=0.2] [zstop φ=<Room5> ] [zstop φ=<RoomEnd>] } ]
+
+#
+# Deploy a few Balls.
+#
+[zschedule SendBalls
+ T_0=00:00:00                 # A base time.
+ S=<BallSource>               # A zsource whence to procure zboxen
+ P=<RoomTour1a>                # A path to deploy them on.
+ T={1 10 20 30 40 45 50 }     # 'T' is list of deployment times.
+    ]
+#
+# Define a couple of special Balls, which do not come from the zsource.
+#
+[zbox Ball.Fast A=Ball n=1  z=<Room3> x=45 P=<RoomTour1> i_P=2 v=10] # A fast Ball.
+
+[zbox Ball.Slow A=Ball n=1 
+ z=<Room1> x=65        # Starts in Room1 at position x.
+ P=<RoomTour2> i_P=0   # Taking this path. Start at this index.
+ v=0.9                 # Much slower than a normal Ball.
+    ]
+
+# An impediment to the others.
+[zbox Ball.Stuck A=Ball n=1  z=<Room4>  P=<RoomTour1> i_P=3 x=67.5 v=0.55] 

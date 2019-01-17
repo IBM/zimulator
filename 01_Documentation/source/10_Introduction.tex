@@ -1,0 +1,62 @@
+
+City transit systems often include some type of vehicle network which
+is by design separated from general city traffic; in the present work,
+such a network (or possibly a combination of such transit modes) will
+be generically referred to as a `metro system'.  This term is used
+somewhat loosely, and the considerations discussed will be variously
+applicable to systems termed as Subway, LRT, Tram or Regional Rail
+systems. The characteristics specifically required here are a lack of
+coupling to street traffic, and (of course related) uniform behaviour
+of vehicles within the system on a somewhat simpler network than that
+of city streets. In fact, it is possible to address simulation of a
+system with these characteristics without specifically speaking of a
+metro system.
+
+Given identification of these properties, it can be expected that the
+microscopic modelling of such a system and its users might be
+generalised in terms of some set of objects which interact via degrees
+of freedum such as capacity, speed, origin-destination, and schedule.
+In \Chapref{Chap:Zim} such a simulation system is described, first by
+defining in an abstract way the dynamical objects and behaviour, and
+then by reference to a concrete implementation. The discussion
+in \Chapref{Chap:Zim} does not make explicit reference to trains,
+vehicles or passengers; this avoidance of domain specificity is effected in
+the hope that other systems which may have similar properties of being
+locally described by one-dimensional progress and a simple set of
+interaction rules might also be simulated. At the least, it is
+expected that designing simulation technology around simple abstract
+rules allows application to metro systems of different types and
+construction.
+
+In \Chapref{Chap:SysExm} a basic configuration of objects is assembled
+to illustrate how a simple system can be realised and its behaviour
+understood.
+
+In \Chapref{Chap:Metro} some general details of metro-system
+simulation are discussed, and it is shown how the objects defined in
+\Chapref{Chap:Zim} can be assembled to form such a simulation. It is
+indicated how generic data describing a metro system of interest may
+be used to construct a model of such a system, and it is discussed how
+details of interest like vehicle speeds, station layout, the metro
+network itself and user demand map to the abstract objects in the
+system.
+
+In \Chapref{Chap:Madrid}, publicly-available data are used to
+construct an approximate model of the metro system of Madrid, Spain,
+with the intention of demonstrating a full example system. The
+resultant model is used in subsequent chapters to illustrate
+calibration and extraction of results.  In \Chapref{Chap:MadCali}, a
+method is shown of calibrating the parameters of the passenger
+walking-speed distribution in order to match real-world reference data
+(`ground truth').  In \Chapref{Chap:MadResu}, a number of results are
+extracted from a simulation run, demonstrating the system's use as a
+digital twin, to access degrees of freedom which are inaccessible (or
+practically inaccessible) in the real world.
+
+The concrete implementation of the simulator is provided in terms of
+Java source code, examples and auxiliary tools; indeed the primary
+function of the present document is as comprehensive documentation of
+this implementation. Programs and data relevant for each chapter are
+generally contained in a directory beginning with the chapter number.
+The material is hosted at:\\
+\phref{https://github.ibm.com/sgresearch/Zimulator}{https://github.ibm.com/sgresearch/Zimulator}

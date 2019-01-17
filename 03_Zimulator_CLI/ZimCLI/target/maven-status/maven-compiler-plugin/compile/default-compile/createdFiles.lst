@@ -1,0 +1,5 @@
+com/ibm/Zimulator/ZimCLI/CommandLine.class
+com/ibm/Zimulator/ZimCLI/ComLineIO.class
+com/ibm/Zimulator/ZimCLI/Help.class
+com/ibm/Zimulator/ZimCLI/FileOrHttpLineIterator.class
+com/ibm/Zimulator/ZimCLI/HttpLineIterator.class

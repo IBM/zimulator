@@ -1,0 +1,19 @@
+# All metro lines: https://en.wikipedia.org/wiki/Madrid_Metro
+# Index,Mode,LineCode,LineName,SourceURL
+1,s,L1,Pinar de Chamartín - Valdecarros,https://en.wikipedia.org/wiki/Line_1_(Madrid_Metro)
+2,s,L2,Las Rosas - Cuatro Caminos,https://en.wikipedia.org/wiki/Line_2_(Madrid_Metro)
+3,s,L3,Villaverde Alto - Moncloa,https://en.wikipedia.org/wiki/Line_3_(Madrid_Metro)
+4,s,L4,Argüelles - Pinar de Chamartín,https://en.wikipedia.org/wiki/Line_4_(Madrid_Metro)
+5,s,L5,Alameda de Osuna - Casa de Campo,https://en.wikipedia.org/wiki/Line_5_(Madrid_Metro)
+6,l,L6,Circular,https://en.wikipedia.org/wiki/Line_6_(Madrid_Metro)
+7,s,L7,Hospital del Henares - Estadio Metropolitano - Pitis,https://en.wikipedia.org/wiki/Line_7_(Madrid_Metro)
+8,s,L8,Nuevos Ministerios - Aeropuerto T4,https://en.wikipedia.org/wiki/Line_8_(Madrid_Metro)
+9,s,L9,Paco de Lucía - Puerta de Arganda - Arganda del Rey,https://en.wikipedia.org/wiki/Line_9_(Madrid_Metro)
+10,s,L10,Hospital Infanta Sofía - Tres Olivos - Puerta del Sur,https://en.wikipedia.org/wiki/Line_10_(Madrid_Metro)
+11,s,L11,Plaza Elíptica - La Fortuna,https://en.wikipedia.org/wiki/Line_11_(Madrid_Metro)
+12,l,L12,MetroSur,https://en.wikipedia.org/wiki/Line_12_(Madrid_Metro)
+13,s,R,Ópera - Príncipe Pío,https://en.wikipedia.org/wiki/Ramal_(Madrid_Metro)
+14,s,ML1,Pinar de Chamartín - Las Tablas,https://en.wikipedia.org/wiki/Line_1_(Madrid_Light_Metro)
+15,s,ML2,Colonia Jardín - Estación de Aravaca,https://en.wikipedia.org/wiki/Line_2_(Madrid_Light_Metro)
+16,s,ML3,Colonia Jardín - Puerta de Boadilla,https://en.wikipedia.org/wiki/Line_3_(Madrid_Light_Metro)
+#17,s,ML4,Parla Tram,https://en.wikipedia.org/wiki/Parla_Tram

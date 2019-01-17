@@ -1,0 +1,48 @@
+%\section{Command-line interface}
+%\label{Sec:ComLine}
+
+In this section is described a Command-Line Interface (CLI) for the
+Zimulator. This CLI will be used in later sections in order to run
+various example simulations, in addition to furnishing a complete
+example implementation of the {\tt zio} interface.
+
+\section{CLI source code}
+The source-files are located in the {\tt ZimCLI} directory:
+\begin{itemize}
+\item {\tt CommandLine.java} -- class with {\tt main()} for command-line use; constructs {\tt Zimulation} class
+\item {\tt Help.java} -- self-documentation for command-line
+\item {\tt ComLineIO.java} -- implementation of {\tt zio} described in detail just below
+\item {\tt FileOrHttpLineIterator.java} -- `translation' from a filename or http address to a string iterator
+\end{itemize}
+
+Within {\tt ComLineIO.java} the five {\tt zio} functionalities are implemented as follows:
+\begin{itemize}
+\item (1) Reading inputs:\\
+  Filenames or http sources can be specified on the command-line; these are converted to the required string iterators.
+\item (2) Consulting servers:\\
+  The Server Identifiers in the specified \zobj{zsystem} are simply
+  interpreted as http addresses. This is merely a choice made in the
+  CLI; the identifiers could in fact be any strings at all.
+\item (3) State storage:\\
+  The streams for loading and saving of state are connected to files; the filenames are specified on the command line.
+\item (4) Reporting:\\
+  A filename is specified on the command line.
+\item (5) Verbosity:\\
+  This is simply sent to {\tt stdout}, with some attributes controlled by command-line switches.
+\end{itemize}
+
+\section{CLI usage}
+
+Typical example usage for the examples which follow in this document is\\
+\comline{java -jar Zimulator.jar zl=45 z=30 I=ZsyntaxSourceFile.zim R=output.zo }\\
+This can be understood by running the CLI with no arguments, invoking the help feature and producing the terminal output:
+
+\vspace{0.5cm}
+%
+% \input{TerminalOutput.tex}   % We choose the picture approach instead.
+%
+\includegraphics[angle=270,width=16cm]{40_figs/ComLineHelp.eps}
+\vspace{0.5cm}
+
+In the following \Chapref{Chap:SysExm} the CLI will be used to
+run some simple example simulations.

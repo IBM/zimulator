@@ -1,0 +1,2 @@
+Main-Class: com.ibm.Zimulator.ZimCLI.CommandLine
+Class-Path: SmallAux.jar Zimulator.jar

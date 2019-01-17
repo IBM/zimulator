@@ -1,0 +1,68 @@
+\documentclass[10pt,notitlepage]{report}
+\input{tex_defs.tex}
+
+
+\title{Generic simulation framework \\applied to Metro Systems}
+
+%\title{This is some thing}
+%\author[1]{Don Joe}
+%\author[2]{Smith K.}
+%\author[1]{Wanderer}
+%\author[1]{Static}
+%\affil[1]{TeX.SX}
+%\affil[2]{Both on a bus}
+%\date{}                     %% if you don't need date to appear
+%\setcounter{Maxaffil}{0}
+%\renewcommand\Affilfont{\itshape\small}
+
+
+\author{Peter Matlock\footnote{\email{pmatlock@sg.ibm.com} until 2019-01-11; subsequently \email{pwm@induulge.net}}}
+
+\affil{IBM Research, Singapore}
+\date{2019-01-10}
+\begin{document}
+\maketitle
+
+\abstract{
+\input{00_Abstract.tex}
+}
+
+\tableofcontents
+\newpage
+
+\chapter{Introduction}
+\input{10_Introduction.tex}
+
+\chapter{Abstracted simulator}
+\label{Chap:Zim}
+\input{20_Zimulator.tex}
+
+\chapter{Zimulator code}
+\label{Chap:ZimCode}
+\input{30_ZimSourceCode.tex}
+
+\chapter{Command-line interface}
+\label{Chap:CLI}
+\input{40_ZimCLI.tex}
+
+\chapter{Toy examples}
+\label{Chap:SysExm}
+\input{50_System_Examples.tex}
+
+\chapter{Metro systems}
+\label{Chap:Metro}
+\input{60_Metro_System.tex}
+
+\chapter{Madrid Metro}
+\label{Chap:Madrid}
+\input{70_Madrid_Metro.tex}
+
+\chapter{Calibration}
+\label{Chap:MadCali}
+\input{80_Madrid_Calibration.tex}
+
+\chapter{Simulation results}
+\label{Chap:MadResu}
+\input{90_Madrid_Results.tex}
+
+\end{document}

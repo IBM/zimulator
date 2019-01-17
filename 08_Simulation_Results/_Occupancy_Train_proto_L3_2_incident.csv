@@ -1,0 +1,27 @@
+# Reading [out/madrid_08_incident.zo] to see occupancy of trains entering [Train_proto/L3/2].
+# Reading [out/madrid_08_incident.zo] to see occupancy of zbox [Train_proto/L3/2].
+18141,5:02:21,Train_proto/L3/2,15
+18159,5:02:39,Train_proto/L3/2,16
+18471,5:07:51,Train_proto/L3/2,21
+18735,5:12:15,Train_proto/L3/2,26
+18941,5:15:41,Train_proto/L3/2,61
+18942,5:15:42,Train_proto/L3/2,62
+18944,5:15:44,Train_proto/L3/2,63
+18946,5:15:46,Train_proto/L3/2,64
+18948,5:15:48,Train_proto/L3/2,65
+18949,5:15:49,Train_proto/L3/2,68
+18951,5:15:51,Train_proto/L3/2,71
+18952,5:15:52,Train_proto/L3/2,72
+18954,5:15:54,Train_proto/L3/2,74
+18955,5:15:55,Train_proto/L3/2,75
+18958,5:15:58,Train_proto/L3/2,76
+18959,5:15:59,Train_proto/L3/2,77
+18961,5:16:01,Train_proto/L3/2,78
+18963,5:16:03,Train_proto/L3/2,81
+19046,5:17:26,Train_proto/L3/2,63
+19222,5:20:22,Train_proto/L3/2,60
+19224,5:20:24,Train_proto/L3/2,61
+19232,5:20:32,Train_proto/L3/2,62
+19320,5:22:00,Train_proto/L3/2,113
+19380,5:23:00,Train_proto/L3/2,249
+19560,5:26:00,Train_proto/L3/2,245

@@ -1,0 +1,31 @@
+#!awk
+
+[zsystem Madrid T_0 = 0 t_0 = 05:00 t_1 = 25:00 Δt = 600.0 R=S ]
+[ztype A=Station n=1 C={ Concourse 1 Gate 1 OutGate 1 Platform 1 Bound 1 Corridor 1 }]
+[ztype A=Bound n=1 m=Pipe C={Train 1} L=125 V=1 N=1] # 25 s dwell time.
+[ztype A=Platform n=1 m=Bag C={Pax 1} N=5000 ]   # Model of passenger area near 'platforms'
+[ztype A=Concourse n=1 m=Bag C={Pax 1} N=6000 ]
+[ztype A=Corridor n=1 m=Span C={Pax 1} L=200 W=15 ]
+[ztype A=Gate n=1 m=Bag C={Pax 1} $=2]
+[ztype A=OutGate n=1 C={ Pax 1 } m=Sink ]
+[ztype A=Track n=1 m=Pipe C={Train 1} L=1000 S=100 ]   # We'll override L.
+[ztype A=Train n=1 q=1 C = { Pax 1 } m=Bag l=100 L=1380 N=1380 S=0 χ=<TrainDoors> v=10 R=S1d ]  # Avg. 10 m/s = 36 km/h
+[ztype A=TrainSink n=1 C={ Train 1 } m=Sink ]
+[zlink TrainDoors A={ Pax 1 0 } ]
+[ztype A=TrainSource n=1 m=Bag C={Train 1} ]
+[ztype A=Pax n=1 v=2.0 Z={ Train 1 Platform 1 Concourse 1 Corridor 1 } l=1 R=S2 ]
+
+#
+# This zsource is referenced by the zdemand.
+#
+# During calibration, the values of v_μ and v_σ are modified by a script which
+# does not parse zsyntax; they are required by that script to be
+# on lines by themselves, and delimited by spaces.
+# i.e. each line has three fields: 'v_μ' '=' and '2.0' for example.
+#
+[zsource PassengerSource φ=[zb Pax A=Pax n=1 π=1] m=One o=Teleport
+#  v_μ = 2.0
+v_μ = 1.32948
+#  v_σ = 1.0
+v_σ = 0.162204
+    ]
